@@ -1,0 +1,15 @@
+export type {
+  PersonalInfo,
+  Experience,
+  ExperienceType,
+  Education,
+  Competency,
+  CompetencyGroup,
+  ProficiencyLevel,
+  ListItem,
+  PreferenceField,
+  CVData,
+  NewExperience,
+  NewEducation,
+  NewCompetency,
+} from './cv'

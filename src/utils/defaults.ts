@@ -1,0 +1,52 @@
+import type { CVData } from '../types'
+
+export const getDefaultCVData = (): CVData => ({
+  personalInfo: {
+    name: '',
+    professionalTitle: '',
+    email: '',
+    phone: '',
+    linkedin: '',
+    website: '',
+    location: '',
+    photo: '',
+  },
+  personalInfoVisibility: {
+    name: true,
+    professionalTitle: true,
+    email: true,
+    phone: true,
+    linkedin: true,
+    website: true,
+    location: true,
+    photo: true,
+  },
+  professionalStatement: '',
+  experiences: [],
+  education: [],
+  competencies: {
+    expert: [],
+    advanced: [],
+    proficient: [],
+  },
+  languages: [],
+  other: [],
+  certifications: [],
+  portfolio: [],
+  preferences: {
+    workMode: { value: '', visible: true },
+    availability: { value: '', visible: true },
+    locationPreference: { value: '', visible: true },
+  },
+  sectionVisibility: {
+    professionalStatement: true,
+    experiences: true,
+    education: true,
+    competencies: true,
+    languages: true,
+    other: true,
+    certifications: true,
+    portfolio: true,
+    preferences: true,
+  },
+})
