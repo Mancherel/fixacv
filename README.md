@@ -87,7 +87,12 @@ This is a personal project, but feedback is appreciated.
 
 ## License
 
-MIT License
+GNU Affero General Public License v3.0 (AGPL-3.0). See LICENSE.
+
+## Trademark
+
+The "fixacv" name and branding are protected by a trademark policy. See
+TRADEMARK.md.
 
 ---
 
