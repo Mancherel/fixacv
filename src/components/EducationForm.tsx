@@ -13,8 +13,8 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
   const [formData, setFormData] = useState<Omit<Education, 'id' | 'visible'>>({
     institution: education?.institution || '',
     degree: education?.degree || '',
-    startYear: education?.startYear || new Date().getFullYear(),
-    endYear: education?.endYear || new Date().getFullYear(),
+    startYear: education?.startYear ?? null,
+    endYear: education?.endYear ?? null,
     description: education?.description || '',
     tags: education?.tags || [],
   })
@@ -107,8 +107,14 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
             id="startYear"
             min="1950"
             max="2100"
-            value={formData.startYear}
-            onChange={(e) => setFormData({ ...formData, startYear: parseInt(e.target.value) })}
+            value={formData.startYear ?? ''}
+            onChange={(e) => {
+              const value = e.target.value
+              setFormData({
+                ...formData,
+                startYear: value ? parseInt(value, 10) : null,
+              })
+            }}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
@@ -122,8 +128,14 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
             id="endYear"
             min="1950"
             max="2100"
-            value={formData.endYear}
-            onChange={(e) => setFormData({ ...formData, endYear: parseInt(e.target.value) })}
+            value={formData.endYear ?? ''}
+            onChange={(e) => {
+              const value = e.target.value
+              setFormData({
+                ...formData,
+                endYear: value ? parseInt(value, 10) : null,
+              })
+            }}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>

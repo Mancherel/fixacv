@@ -160,8 +160,12 @@ export async function importLinkedInData(files: FileList): Promise<Partial<CVDat
         id: crypto.randomUUID(),
         institution: edu['School Name'] || '',
         degree: edu['Degree Name'] || '',
-        startYear: parseInt(edu['Start Date']) || 2000,
-        endYear: parseInt(edu['End Date']) || 2000,
+        startYear: Number.isFinite(parseInt(edu['Start Date'], 10))
+          ? parseInt(edu['Start Date'], 10)
+          : null,
+        endYear: Number.isFinite(parseInt(edu['End Date'], 10))
+          ? parseInt(edu['End Date'], 10)
+          : null,
         description: '',
         tags: [],
         visible: true,

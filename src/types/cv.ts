@@ -33,8 +33,8 @@ export interface Education {
   id: string
   institution: string
   degree: string
-  startYear: number
-  endYear: number
+  startYear: number | null
+  endYear: number | null
   description: string
   tags: ListItem[]
   visible: boolean

@@ -77,6 +77,15 @@ function EducationItem({
   onDelete: () => void
   onToggleVisible: () => void
 }) {
+  const yearRange = (() => {
+    const start = Number.isFinite(education.startYear ?? NaN) ? education.startYear : null
+    const end = Number.isFinite(education.endYear ?? NaN) ? education.endYear : null
+    if (start && end) return `${start} - ${end}`
+    if (start) return `${start}`
+    if (end) return `${end}`
+    return ''
+  })()
+
   return (
     <div
       className={`group rounded-lg border border-slate-200 bg-white p-4 shadow-sm hover:border-slate-300 hover:bg-slate-50 ${
@@ -87,9 +96,7 @@ function EducationItem({
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900">{education.institution}</h3>
           <p className="text-sm text-gray-700">{education.degree}</p>
-          <p className="text-xs text-gray-500">
-            {education.startYear} - {education.endYear}
-          </p>
+          {yearRange ? <p className="text-xs text-gray-500">{yearRange}</p> : null}
           {education.description && (
             <p className="mt-2 text-sm text-gray-600">{education.description}</p>
           )}

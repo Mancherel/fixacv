@@ -36,6 +36,23 @@ type SidebarBlock =
   | { id: string; type: 'preferences-title' }
   | { id: string; type: 'preference-item'; name: string }
 
+const hasExperienceContent = (exp: Experience) => {
+  if (exp.company?.trim()) return true
+  if (exp.title?.trim()) return true
+  if (exp.description?.trim()) return true
+  if (exp.tags?.some((tag) => tag.visible && tag.name.trim())) return true
+  return Boolean(formatDateRangeWithDuration(exp.startDate, exp.endDate))
+}
+
+const hasEducationContent = (edu: Education) => {
+  if (edu.institution?.trim()) return true
+  if (edu.degree?.trim()) return true
+  if (edu.description?.trim()) return true
+  if (edu.tags?.some((tag) => tag.visible && tag.name.trim())) return true
+  if (edu.startYear || edu.endYear) return true
+  return false
+}
+
 function buildBlocks(cvData: ReturnType<typeof useCVData>['cvData']): MainBlock[] {
   const blocks: MainBlock[] = [{ id: 'header', type: 'header' }]
 
@@ -43,7 +60,9 @@ function buildBlocks(cvData: ReturnType<typeof useCVData>['cvData']): MainBlock[
     blocks.push({ id: 'statement', type: 'statement' })
   }
 
-  const visibleExperiences = cvData.experiences.filter((exp) => exp.visible)
+  const visibleExperiences = cvData.experiences
+    .filter((exp) => exp.visible)
+    .filter(hasExperienceContent)
   if (cvData.sectionVisibility.experiences && visibleExperiences.length > 0) {
     blocks.push({ id: 'experience-title', type: 'experience-title' })
     visibleExperiences.forEach((exp) => {
@@ -51,7 +70,9 @@ function buildBlocks(cvData: ReturnType<typeof useCVData>['cvData']): MainBlock[
     })
   }
 
-  const visibleEducation = cvData.education.filter((edu) => edu.visible)
+  const visibleEducation = cvData.education
+    .filter((edu) => edu.visible)
+    .filter(hasEducationContent)
   if (cvData.sectionVisibility.education && visibleEducation.length > 0) {
     blocks.push({ id: 'education-title', type: 'education-title' })
     visibleEducation.forEach((edu) => {
@@ -109,14 +130,14 @@ function buildSidebarBlocks(
 
   const hasCompetencies =
     cvData.sectionVisibility.competencies &&
-    (cvData.competencies.expert.some((comp) => comp.visible) ||
-      cvData.competencies.advanced.some((comp) => comp.visible) ||
-      cvData.competencies.proficient.some((comp) => comp.visible))
+    (cvData.competencies.expert.some((comp) => comp.visible && comp.name.trim()) ||
+      cvData.competencies.advanced.some((comp) => comp.visible && comp.name.trim()) ||
+      cvData.competencies.proficient.some((comp) => comp.visible && comp.name.trim()))
 
   if (hasCompetencies) {
     blocks.push({ id: 'side-competencies-title', type: 'competencies-title' })
     ;(['expert', 'advanced', 'proficient'] as ProficiencyLevel[]).forEach((level) => {
-      const list = cvData.competencies[level].filter((comp) => comp.visible)
+      const list = cvData.competencies[level].filter((comp) => comp.visible && comp.name.trim())
       if (list.length === 0) return
       blocks.push({ id: `side-competency-level-${level}`, type: 'competency-level-title', level })
       const rows = competencyRows[level]?.length
@@ -133,7 +154,7 @@ function buildSidebarBlocks(
     })
   }
 
-  const visibleLanguages = cvData.languages.filter((item) => item.visible)
+  const visibleLanguages = cvData.languages.filter((item) => item.visible && item.name.trim())
   if (cvData.sectionVisibility.languages && visibleLanguages.length > 0) {
     blocks.push({ id: 'side-languages-title', type: 'languages-title' })
     visibleLanguages.forEach((item, index) => {
@@ -141,7 +162,7 @@ function buildSidebarBlocks(
     })
   }
 
-  const visibleOther = cvData.other.filter((item) => item.visible)
+  const visibleOther = cvData.other.filter((item) => item.visible && item.name.trim())
   if (cvData.sectionVisibility.other && visibleOther.length > 0) {
     blocks.push({ id: 'side-other-title', type: 'other-title' })
     visibleOther.forEach((item, index) => {
@@ -149,7 +170,9 @@ function buildSidebarBlocks(
     })
   }
 
-  const visibleCertifications = cvData.certifications.filter((item) => item.visible)
+  const visibleCertifications = cvData.certifications.filter(
+    (item) => item.visible && item.name.trim()
+  )
   if (cvData.sectionVisibility.certifications && visibleCertifications.length > 0) {
     blocks.push({ id: 'side-certifications-title', type: 'certifications-title' })
     visibleCertifications.forEach((item, index) => {
@@ -161,7 +184,7 @@ function buildSidebarBlocks(
     })
   }
 
-  const visiblePortfolio = cvData.portfolio.filter((item) => item.visible)
+  const visiblePortfolio = cvData.portfolio.filter((item) => item.visible && item.name.trim())
   if (cvData.sectionVisibility.portfolio && visiblePortfolio.length > 0) {
     blocks.push({ id: 'side-portfolio-title', type: 'portfolio-title' })
     visiblePortfolio.forEach((item, index) => {
@@ -958,6 +981,12 @@ function ExperienceBlock({
   block: Extract<MainBlock, { type: 'experience-item' }>
 }) {
   const exp = block.item
+  const dateText = formatDateRangeWithDuration(exp.startDate, exp.endDate)
+  const showCompany = exp.company?.trim()
+  const showTitle = exp.title?.trim()
+  const showDescription = exp.description?.trim()
+  const visibleTags = exp.tags.filter((tag) => tag.visible && tag.name.trim())
+  const hasDetails = Boolean(showCompany || showTitle || showDescription || visibleTags.length || dateText)
   const typeLabel =
     exp.type === 'assignment'
       ? 'Assignment'
@@ -971,26 +1000,28 @@ function ExperienceBlock({
       data-block-id={block.id}
       className="page-break-inside-avoid border-b border-gray-100 pb-2 last:border-b-0 last:pb-0"
     >
-      {typeLabel && (
+      {typeLabel && hasDetails && (
         <p className="mb-1 text-[9px] uppercase tracking-[0.2em] text-gray-400">
           {typeLabel}
         </p>
       )}
-      <div className="flex items-baseline justify-between">
-        <h3 className="text-xs font-semibold text-gray-900 mb-0.6">{exp.company}</h3>
-        <span className="text-[10px] text-gray-500">
-          {formatDateRangeWithDuration(exp.startDate, exp.endDate)}
-        </span>
-      </div>
-      <p className="text-[10.5px] font-medium text-gray-800">{exp.title}</p>
-      {exp.description && (
+      {(showCompany || dateText) && (
+        <div className="flex items-baseline justify-between">
+          {showCompany ? (
+            <h3 className="mb-0.5 text-xs font-semibold text-gray-900">{showCompany}</h3>
+          ) : (
+            <span />
+          )}
+          {dateText ? <span className="text-[10px] text-gray-500">{dateText}</span> : null}
+        </div>
+      )}
+      {showTitle ? <p className="text-[10.5px] font-medium text-gray-800">{showTitle}</p> : null}
+      {showDescription && (
         <p className="mt-0.5 text-[10px] leading-snug text-gray-600">{exp.description}</p>
       )}
-      {exp.tags.filter((tag) => tag.visible).length > 0 && (
+      {visibleTags.length > 0 && (
         <div className="mt-1 flex flex-wrap gap-0.5">
-          {exp.tags
-            .filter((tag) => tag.visible)
-            .map((tag) => (
+          {visibleTags.map((tag) => (
             <span
               key={tag.id}
               className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] text-gray-600"
@@ -1010,26 +1041,42 @@ function EducationBlock({
   block: Extract<MainBlock, { type: 'education-item' }>
 }) {
   const edu = block.item
+  const startYear = edu.startYear ?? null
+  const endYear = edu.endYear ?? null
+  const yearRange = startYear && endYear
+    ? `${startYear} - ${endYear}`
+    : startYear
+      ? `${startYear}`
+      : endYear
+        ? `${endYear}`
+        : ''
+  const showInstitution = edu.institution?.trim()
+  const showDegree = edu.degree?.trim()
+  const showDescription = edu.description?.trim()
+  const visibleTags = edu.tags.filter((tag) => tag.visible && tag.name.trim())
+
   return (
     <div
       data-block-id={block.id}
       className="page-break-inside-avoid border-b border-gray-100 pb-2 last:border-b-0 last:pb-0"
     >
-      <div className="flex items-baseline justify-between">
-        <h3 className="text-xs font-semibold text-gray-900">{edu.institution}</h3>
-        <span className="text-[10px] text-gray-600">
-          {edu.startYear} - {edu.endYear}
-        </span>
-      </div>
-      <p className="text-[10px] text-gray-700">{edu.degree}</p>
-      {edu.description && (
+      {(showInstitution || yearRange) && (
+        <div className="flex items-baseline justify-between">
+          {showInstitution ? (
+            <h3 className="text-xs font-semibold text-gray-900">{showInstitution}</h3>
+          ) : (
+            <span />
+          )}
+          {yearRange ? <span className="text-[10px] text-gray-600">{yearRange}</span> : null}
+        </div>
+      )}
+      {showDegree ? <p className="text-[10px] text-gray-700">{showDegree}</p> : null}
+      {showDescription && (
         <p className="mt-0.5 text-[10px] leading-snug text-gray-600">{edu.description}</p>
       )}
-      {edu.tags.filter((tag) => tag.visible).length > 0 && (
+      {visibleTags.length > 0 && (
         <div className="mt-1 flex flex-wrap gap-0.5">
-          {edu.tags
-            .filter((tag) => tag.visible)
-            .map((tag) => (
+          {visibleTags.map((tag) => (
               <span
                 key={tag.id}
                 className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] text-gray-600"

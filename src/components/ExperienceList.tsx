@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useCVData } from '../context/CVContext'
 import { ExperienceForm } from './ExperienceForm'
+import { formatDateRange } from '../utils/dateUtils'
 import type { Experience } from '../types'
 
 export function ExperienceList() {
@@ -29,13 +30,6 @@ export function ExperienceList() {
     setIsAdding(false)
   }
 
-  const formatDate = (date: string | null) => {
-    if (!date) return 'Ongoing'
-    const [year, month] = date.split('-')
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    return `${monthNames[parseInt(month) - 1]} ${year}`
-  }
-
   return (
     <div className="space-y-4">
       {cvData.experiences.map((exp) => (
@@ -52,7 +46,6 @@ export function ExperienceList() {
               onToggleVisible={() =>
                 updateExperience(exp.id, { visible: !exp.visible })
               }
-              formatDate={formatDate}
             />
           )}
         </div>
@@ -79,14 +72,13 @@ function ExperienceItem({
   onEdit,
   onDelete,
   onToggleVisible,
-  formatDate,
 }: {
   experience: Experience
   onEdit: () => void
   onDelete: () => void
   onToggleVisible: () => void
-  formatDate: (date: string | null) => string
 }) {
+  const dateRange = formatDateRange(experience.startDate, experience.endDate)
   const typeLabel =
     experience.type === 'assignment'
       ? 'Assignment'
@@ -113,9 +105,7 @@ function ExperienceItem({
             )}
           </div>
           <p className="text-sm text-gray-700">{experience.title}</p>
-          <p className="text-xs text-gray-500">
-            {formatDate(experience.startDate)} - {formatDate(experience.endDate)}
-          </p>
+          {dateRange ? <p className="text-xs text-gray-500">{dateRange}</p> : null}
           {experience.description && (
             <p className="mt-2 text-sm text-gray-600">{experience.description}</p>
           )}

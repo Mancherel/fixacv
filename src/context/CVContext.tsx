@@ -85,6 +85,8 @@ const normalizeExperience = (exp: Experience): Experience => ({
 
 const normalizeEducation = (edu: Education): Education => ({
   ...normalizeVisibility(edu),
+  startYear: edu.startYear ?? null,
+  endYear: edu.endYear ?? null,
   description: edu.description ?? '',
   tags: normalizeListItems(edu.tags as Array<ListItem | string>),
 })
