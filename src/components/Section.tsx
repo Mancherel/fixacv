@@ -83,12 +83,14 @@ export function Section({
       </div>
 
       <div
-        className={`mx-6 overflow-hidden transition-all duration-200 ease-out ${
-          isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+        className={`mx-6 grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-out ${
+          isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
         }`}
         aria-hidden={!isOpen}
       >
-        <div className="my-4">{children}</div>
+        <div className="min-h-0">
+          <div className="my-4">{children}</div>
+        </div>
       </div>
     </div>
   )
