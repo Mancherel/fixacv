@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0f172a" />
+  <rect x="60" y="60" width="1080" height="510" rx="36" fill="#ffffff" />
+  <rect x="90" y="90" width="480" height="450" rx="28" fill="#e2e8f0" />
+  <rect x="120" y="130" width="420" height="60" rx="16" fill="#1d4ed8" />
+  <rect x="120" y="210" width="360" height="28" rx="10" fill="#94a3b8" />
+  <rect x="120" y="260" width="320" height="28" rx="10" fill="#94a3b8" />
+  <rect x="120" y="310" width="300" height="28" rx="10" fill="#94a3b8" />
+
+  <text x="740" y="260" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-size="120" font-weight="800" fill="#1d4ed8" letter-spacing="6">CV</text>
+  <g transform="rotate(-12 740 250)">
+    <text x="740" y="310" text-anchor="middle" font-family="Brush Script MT, Segoe Script, Comic Sans MS, cursive" font-size="110" fill="#f59e0b" stroke="#111827" stroke-width="4" paint-order="stroke">fixa</text>
+  </g>
+  <text x="740" y="390" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#334155">
+    Privacy-first CV builder • Local-only data • PDF export
+  </text>
+  <text x="740" y="430" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#64748b">
+    English + Swedish • No signup
+  </text>
+</svg>
