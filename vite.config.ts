@@ -7,6 +7,6 @@ export default defineConfig({
   // Custom domain: /
   base: '/fixacv/',
   server: {
-    port: 3000,
+    port: 3001,
   },
 })
