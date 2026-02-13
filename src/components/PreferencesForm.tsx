@@ -1,19 +1,28 @@
 import { useCVData } from '../context/CVContext'
-
-const WORK_MODES = ['Flexible', 'Remote', 'Hybrid', 'On-site']
+import { useI18n } from '../i18n/useI18n'
+import { VisibilityToggle } from './VisibilityToggle'
 
 export function PreferencesForm() {
   const { cvData, updatePreferences } = useCVData()
+  const { t } = useI18n()
   const { preferences } = cvData
+  const workModeOptions = [
+    { value: '', label: t('forms.preferences.workModeFlexible') },
+    { value: 'Remote', label: t('forms.preferences.workModeRemote') },
+    { value: 'Hybrid', label: t('forms.preferences.workModeHybrid') },
+    { value: 'On-site', label: t('forms.preferences.workModeOnSite') },
+  ]
 
   return (
     <div className="space-y-4">
       <div className={preferences.workMode.visible ? '' : 'opacity-60'}>
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-gray-700">Work mode</label>
-          <button
-            type="button"
-            onClick={() =>
+          <label className="block text-sm font-medium text-gray-700">
+            {t('forms.preferences.workMode')}
+          </label>
+          <VisibilityToggle
+            isVisible={preferences.workMode.visible}
+            onToggle={() =>
               updatePreferences({
                 ...preferences,
                 workMode: {
@@ -22,20 +31,7 @@ export function PreferencesForm() {
                 },
               })
             }
-            className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-              preferences.workMode.visible
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={preferences.workMode.visible ? 'Hide from CV' : 'Show in CV'}
-            aria-label={preferences.workMode.visible ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                preferences.workMode.visible ? 'translate-x-3.5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          />
         </div>
         <select
           value={preferences.workMode.value}
@@ -47,23 +43,23 @@ export function PreferencesForm() {
           }
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         >
-          {WORK_MODES.map((mode) => (
-            <option key={mode} value={mode === 'Flexible' ? '' : mode}>
-              {mode}
+          {workModeOptions.map((mode) => (
+            <option key={mode.value || 'flexible'} value={mode.value}>
+              {mode.label}
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-gray-400">Leave as Flexible if you have no preference.</p>
+        <p className="mt-1 text-xs text-gray-400">{t('forms.preferences.workModeHint')}</p>
       </div>
 
       <div className={preferences.availability.visible ? '' : 'opacity-60'}>
         <div className="flex items-center justify-between">
           <label className="block text-sm font-medium text-gray-700">
-            Availability / notice period
+            {t('forms.preferences.availability')}
           </label>
-          <button
-            type="button"
-            onClick={() =>
+          <VisibilityToggle
+            isVisible={preferences.availability.visible}
+            onToggle={() =>
               updatePreferences({
                 ...preferences,
                 availability: {
@@ -72,20 +68,7 @@ export function PreferencesForm() {
                 },
               })
             }
-            className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-              preferences.availability.visible
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={preferences.availability.visible ? 'Hide from CV' : 'Show in CV'}
-            aria-label={preferences.availability.visible ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                preferences.availability.visible ? 'translate-x-3.5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          />
         </div>
         <input
           type="text"
@@ -97,16 +80,18 @@ export function PreferencesForm() {
             })
           }
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="e.g., 1 month notice"
+          placeholder={t('forms.preferences.availabilityPlaceholder')}
         />
       </div>
 
       <div className={preferences.locationPreference.visible ? '' : 'opacity-60'}>
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-gray-700">Location preference</label>
-          <button
-            type="button"
-            onClick={() =>
+          <label className="block text-sm font-medium text-gray-700">
+            {t('forms.preferences.locationPreference')}
+          </label>
+          <VisibilityToggle
+            isVisible={preferences.locationPreference.visible}
+            onToggle={() =>
               updatePreferences({
                 ...preferences,
                 locationPreference: {
@@ -115,20 +100,7 @@ export function PreferencesForm() {
                 },
               })
             }
-            className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-              preferences.locationPreference.visible
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={preferences.locationPreference.visible ? 'Hide from CV' : 'Show in CV'}
-            aria-label={preferences.locationPreference.visible ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                preferences.locationPreference.visible ? 'translate-x-3.5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          />
         </div>
         <input
           type="text"
@@ -143,7 +115,7 @@ export function PreferencesForm() {
             })
           }
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="e.g., Stockholm area"
+          placeholder={t('forms.preferences.locationPreferencePlaceholder')}
         />
       </div>
     </div>

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useCVData } from '../context/CVContext'
+import { useI18n } from '../i18n/useI18n'
+import { VisibilityToggle } from './VisibilityToggle'
 import type { Education, ListItem } from '../types'
 
 interface EducationFormProps {
@@ -10,6 +12,7 @@ interface EducationFormProps {
 
 export function EducationForm({ education, onSave, onCancel }: EducationFormProps) {
   const { addEducation, updateEducation } = useCVData()
+  const { t } = useI18n()
   const [formData, setFormData] = useState<Omit<Education, 'id' | 'visible'>>({
     institution: education?.institution || '',
     degree: education?.degree || '',
@@ -71,7 +74,7 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label htmlFor="institution" className="block text-sm font-medium text-gray-700">
-          Institution
+          {t('forms.education.institution')}
         </label>
         <input
           type="text"
@@ -79,13 +82,13 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
           value={formData.institution}
           onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="University name"
+          placeholder={t('forms.education.institutionPlaceholder')}
         />
       </div>
 
       <div>
         <label htmlFor="degree" className="block text-sm font-medium text-gray-700">
-          Degree/Program
+          {t('forms.education.degreeProgram')}
         </label>
         <input
           type="text"
@@ -93,14 +96,14 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
           value={formData.degree}
           onChange={(e) => setFormData({ ...formData, degree: e.target.value })}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="e.g., Bachelor of Science in Computer Science"
+          placeholder={t('forms.education.degreePlaceholder')}
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="startYear" className="block text-sm font-medium text-gray-700">
-            Start Year
+            {t('forms.education.startYear')}
           </label>
           <input
             type="number"
@@ -121,7 +124,7 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
 
         <div>
           <label htmlFor="endYear" className="block text-sm font-medium text-gray-700">
-            End Year
+            {t('forms.education.endYear')}
           </label>
           <input
             type="number"
@@ -143,7 +146,7 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
 
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-          Description
+          {t('forms.education.description')}
         </label>
         <textarea
           id="description"
@@ -156,7 +159,7 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
 
       <div>
         <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
-          Tags
+          {t('forms.education.tags')}
         </label>
         <div className="mt-1 flex gap-2">
           <input
@@ -165,7 +168,7 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             onKeyDown={handleTagInputKeyDown}
-            placeholder="e.g., AI, Research"
+            placeholder={t('forms.education.tagsPlaceholder')}
             className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
           <button
@@ -173,7 +176,7 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
             onClick={handleAddTag}
             className="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
           >
-            Add
+            {t('common.actions.add')}
           </button>
         </div>
         {formData.tags.length > 0 && (
@@ -191,8 +194,8 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
                     type="button"
                     onClick={() => handleRemoveTag(tag.id)}
                     className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-gray-600 hover:bg-slate-100"
-                    title="Remove"
-                    aria-label="Remove"
+                    title={t('common.actions.remove')}
+                    aria-label={t('common.actions.remove')}
                   >
                     <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path
@@ -203,23 +206,10 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
                       />
                     </svg>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleTag(tag.id)}
-                    className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-                      tag.visible
-                        ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                        : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-                    }`}
-                    title={tag.visible ? 'Hide from CV' : 'Show in CV'}
-                    aria-label={tag.visible ? 'Visible' : 'Hidden'}
-                  >
-                    <span
-                      className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                        tag.visible ? 'translate-x-3.5' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+                  <VisibilityToggle
+                    isVisible={tag.visible}
+                    onToggle={() => handleToggleTag(tag.id)}
+                  />
                 </div>
               </div>
             ))}
@@ -233,13 +223,13 @@ export function EducationForm({ education, onSave, onCancel }: EducationFormProp
           onClick={onCancel}
           className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
-          Cancel
+          {t('common.actions.cancel')}
         </button>
         <button
           type="submit"
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
-          {education ? 'Update' : 'Add'}
+          {education ? t('common.actions.update') : t('common.actions.add')}
         </button>
       </div>
     </form>

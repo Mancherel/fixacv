@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react'
+import { VisibilityToggle } from './VisibilityToggle'
 
 interface SectionProps {
   title: string
@@ -7,6 +8,8 @@ interface SectionProps {
   onToggleVisibility?: () => void
   isVisible?: boolean
   collapseSignal?: number
+  isOpen?: boolean
+  onToggleOpen?: () => void
 }
 
 export function Section({
@@ -16,16 +19,24 @@ export function Section({
   onToggleVisibility,
   isVisible = true,
   collapseSignal,
+  isOpen: controlledIsOpen,
+  onToggleOpen,
 }: SectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen)
+  const isOpen = controlledIsOpen ?? internalIsOpen
 
   useEffect(() => {
-    if (collapseSignal !== undefined) {
-      setIsOpen(false)
+    if (collapseSignal !== undefined && controlledIsOpen === undefined) {
+      setInternalIsOpen(false)
     }
-  }, [collapseSignal])
+  }, [collapseSignal, controlledIsOpen])
 
-  const handleToggle = () => setIsOpen(!isOpen)
+  const handleToggle = () => {
+    if (controlledIsOpen === undefined) {
+      setInternalIsOpen(!isOpen)
+    }
+    onToggleOpen?.()
+  }
   const handleHeaderKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
@@ -39,6 +50,7 @@ export function Section({
         className="mb-0 flex cursor-pointer items-center justify-between rounded-md px-1 py-1 transition-colors"
         role="button"
         tabIndex={0}
+        aria-expanded={isOpen}
         onClick={handleToggle}
         onKeyDown={handleHeaderKeyDown}
       >
@@ -60,30 +72,17 @@ export function Section({
         </div>
 
         {onToggleVisibility && (
-          <button
-            onClick={(event) => {
-              event.stopPropagation()
-              onToggleVisibility()
-            }}
-            className={`relative inline-flex h-5 w-10 items-center rounded-full border transition-colors ${
-              isVisible
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={isVisible ? 'Hide from CV' : 'Show in CV'}
-            aria-label={isVisible ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                isVisible ? 'translate-x-5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <VisibilityToggle
+            isVisible={isVisible}
+            onToggle={onToggleVisibility}
+            size="md"
+            stopPropagation
+          />
         )}
       </div>
 
       <div
-        className={`mx-6 grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-out ${
+        className={`mx-1 grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-out sm:mx-4 lg:mx-6 ${
           isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
         }`}
         aria-hidden={!isOpen}

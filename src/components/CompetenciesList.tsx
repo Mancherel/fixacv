@@ -1,20 +1,28 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useCVData } from '../context/CVContext'
+import { getCompetencyLevelText } from '../i18n'
+import { useI18n } from '../i18n/useI18n'
+import { VisibilityToggle } from './VisibilityToggle'
 import type { ProficiencyLevel, Competency } from '../types'
 
 export function CompetenciesList() {
   const { cvData, addCompetency, updateCompetency, deleteCompetency, reorderCompetency } =
     useCVData()
+  const { language, t } = useI18n()
   const [skillName, setSkillName] = useState('')
   const [skillLevel, setSkillLevel] = useState<ProficiencyLevel>('proficient')
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const [draggedOverId, setDraggedOverId] = useState<string | null>(null)
 
-  const levelLabels: Record<ProficiencyLevel, string> = {
-    expert: 'Expert',
-    advanced: 'Advanced',
-    proficient: 'Proficient',
-  }
+  const levelLabels = useMemo(
+    () =>
+      ({
+        expert: getCompetencyLevelText(language, 'expert'),
+        advanced: getCompetencyLevelText(language, 'advanced'),
+        proficient: getCompetencyLevelText(language, 'proficient'),
+      }) as Record<ProficiencyLevel, string>,
+    [language],
+  )
 
   const handleAdd = () => {
     if (skillName.trim()) {
@@ -37,7 +45,7 @@ export function CompetenciesList() {
   }
 
   const handleDelete = (id: string) => {
-    if (confirm('Delete this skill?')) {
+    if (confirm(t('forms.competencies.confirmDelete'))) {
       deleteCompetency(id)
     }
   }
@@ -78,25 +86,23 @@ export function CompetenciesList() {
     setDraggedOverId(null)
   }
 
-  // Get all competencies sorted by level
   const allCompetencies: Array<Competency & { currentLevel: ProficiencyLevel }> = [
-    ...cvData.competencies.expert.map(c => ({ ...c, currentLevel: 'expert' as ProficiencyLevel })),
-    ...cvData.competencies.advanced.map(c => ({ ...c, currentLevel: 'advanced' as ProficiencyLevel })),
-    ...cvData.competencies.proficient.map(c => ({ ...c, currentLevel: 'proficient' as ProficiencyLevel })),
+    ...cvData.competencies.expert.map((c) => ({ ...c, currentLevel: 'expert' as ProficiencyLevel })),
+    ...cvData.competencies.advanced.map((c) => ({ ...c, currentLevel: 'advanced' as ProficiencyLevel })),
+    ...cvData.competencies.proficient.map((c) => ({ ...c, currentLevel: 'proficient' as ProficiencyLevel })),
   ]
 
   return (
     <div className="space-y-4">
-      {/* Add new skill */}
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <h4 className="mb-3 text-sm font-semibold text-gray-900">Add Skill</h4>
+        <h4 className="mb-3 text-sm font-semibold text-gray-900">{t('forms.competencies.addSkillTitle')}</h4>
         <div className="flex gap-2">
           <input
             type="text"
             value={skillName}
             onChange={(e) => setSkillName(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Skill name..."
+            placeholder={t('forms.competencies.skillNamePlaceholder')}
             className="block h-9 w-full rounded-md border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
           <div className="relative">
@@ -105,9 +111,9 @@ export function CompetenciesList() {
               onChange={(e) => setSkillLevel(e.target.value as ProficiencyLevel)}
               className="h-9 appearance-none rounded-md border border-slate-200 px-3 py-2 pr-9 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
-              <option value="proficient">Proficient</option>
-              <option value="advanced">Advanced</option>
-              <option value="expert">Expert</option>
+              <option value="proficient">{levelLabels.proficient}</option>
+              <option value="advanced">{levelLabels.advanced}</option>
+              <option value="expert">{levelLabels.expert}</option>
             </select>
             <svg
               className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
@@ -123,14 +129,13 @@ export function CompetenciesList() {
             onClick={handleAdd}
             className="h-9 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            Add
+            {t('common.actions.add')}
           </button>
         </div>
       </div>
 
-      {/* List of skills grouped by level */}
       {(['expert', 'advanced', 'proficient'] as ProficiencyLevel[]).map((level) => {
-        const skillsInLevel = allCompetencies.filter(c => c.currentLevel === level)
+        const skillsInLevel = allCompetencies.filter((c) => c.currentLevel === level)
 
         return (
           <div
@@ -167,7 +172,9 @@ export function CompetenciesList() {
               </div>
             ) : (
               <p className="text-sm text-gray-400">
-                {draggedItem ? 'Drop here' : `No ${level} skills`}
+                {draggedItem
+                  ? t('forms.competencies.dropHere')
+                  : t('forms.competencies.noSkillsForLevel', { level: levelLabels[level].toLowerCase() })}
               </p>
             )}
           </div>
@@ -175,7 +182,7 @@ export function CompetenciesList() {
       })}
 
       {allCompetencies.length === 0 && (
-        <p className="text-center text-sm text-gray-400">No skills added yet</p>
+        <p className="text-center text-sm text-gray-400">{t('forms.competencies.noSkillsYet')}</p>
       )}
     </div>
   )
@@ -206,6 +213,7 @@ function CompetencyItem({
   isDragging: boolean
   isDropTarget: boolean
 }) {
+  const { t } = useI18n()
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(competency.name)
 
@@ -273,8 +281,8 @@ function CompetencyItem({
         <button
           onClick={onDelete}
           className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-gray-600 opacity-0 transition-opacity hover:bg-slate-100 group-hover:opacity-100"
-          title="Delete"
-          aria-label="Delete"
+          title={t('common.actions.delete')}
+          aria-label={t('common.actions.delete')}
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path
@@ -285,23 +293,7 @@ function CompetencyItem({
             />
           </svg>
         </button>
-        <button
-          type="button"
-          onClick={onToggleVisible}
-          className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-            competency.visible
-              ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-              : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-          }`}
-          title={competency.visible ? 'Hide from CV' : 'Show in CV'}
-          aria-label={competency.visible ? 'Visible' : 'Hidden'}
-        >
-          <span
-            className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-              competency.visible ? 'translate-x-3.5' : 'translate-x-1'
-            }`}
-          />
-        </button>
+        <VisibilityToggle isVisible={competency.visible} onToggle={onToggleVisible} />
       </div>
     </div>
   )

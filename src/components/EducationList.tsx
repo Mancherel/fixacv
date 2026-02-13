@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { useCVData } from '../context/CVContext'
+import { useI18n } from '../i18n/useI18n'
 import { EducationForm } from './EducationForm'
+import { VisibilityToggle } from './VisibilityToggle'
 import type { Education } from '../types'
 
 export function EducationList() {
   const { cvData, deleteEducation, updateEducation } = useCVData()
+  const { t } = useI18n()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [isAdding, setIsAdding] = useState(false)
 
@@ -14,7 +17,7 @@ export function EducationList() {
   }
 
   const handleDelete = (id: string) => {
-    if (confirm('Delete this education?')) {
+    if (confirm(t('forms.education.confirmDelete'))) {
       deleteEducation(id)
     }
   }
@@ -59,7 +62,7 @@ export function EducationList() {
           onClick={() => setIsAdding(true)}
           className="w-full rounded-md border-2 border-dashed border-slate-300 px-4 py-3 text-sm font-medium text-slate-600 hover:border-slate-400 hover:text-slate-700"
         >
-          + Add Education
+          {t('forms.education.addButton')}
         </button>
       )}
     </div>
@@ -77,6 +80,7 @@ function EducationItem({
   onDelete: () => void
   onToggleVisible: () => void
 }) {
+  const { t } = useI18n()
   const yearRange = (() => {
     const start = Number.isFinite(education.startYear ?? NaN) ? education.startYear : null
     const end = Number.isFinite(education.endYear ?? NaN) ? education.endYear : null
@@ -120,8 +124,8 @@ function EducationItem({
             <button
               onClick={onEdit}
               className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-gray-600 hover:bg-slate-100"
-              title="Edit"
-              aria-label="Edit"
+              title={t('common.actions.edit')}
+              aria-label={t('common.actions.edit')}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path
@@ -135,8 +139,8 @@ function EducationItem({
             <button
               onClick={onDelete}
               className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-gray-600 hover:bg-slate-100"
-              title="Delete"
-              aria-label="Delete"
+              title={t('common.actions.delete')}
+              aria-label={t('common.actions.delete')}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path
@@ -148,23 +152,7 @@ function EducationItem({
               </svg>
             </button>
           </div>
-          <button
-            type="button"
-            onClick={onToggleVisible}
-            className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-              education.visible
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={education.visible ? 'Hide from CV' : 'Show in CV'}
-            aria-label={education.visible ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                education.visible ? 'translate-x-3.5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <VisibilityToggle isVisible={education.visible} onToggle={onToggleVisible} />
         </div>
       </div>
     </div>

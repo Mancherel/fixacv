@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { useCVData } from '../context/CVContext'
 import { ExperienceForm } from './ExperienceForm'
 import { formatDateRange } from '../utils/dateUtils'
-import type { Experience } from '../types'
+import { useI18n } from '../i18n/useI18n'
+import { VisibilityToggle } from './VisibilityToggle'
+import type { AppLanguage, Experience } from '../types'
 
 export function ExperienceList() {
   const { cvData, deleteExperience, updateExperience } = useCVData()
+  const { language, t } = useI18n()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [isAdding, setIsAdding] = useState(false)
 
@@ -15,7 +18,7 @@ export function ExperienceList() {
   }
 
   const handleDelete = (id: string) => {
-    if (confirm('Delete this experience?')) {
+    if (confirm(t('forms.experience.confirmDelete'))) {
       deleteExperience(id)
     }
   }
@@ -41,6 +44,7 @@ export function ExperienceList() {
           ) : (
             <ExperienceItem
               experience={exp}
+              language={language}
               onEdit={() => handleEdit(exp.id)}
               onDelete={() => handleDelete(exp.id)}
               onToggleVisible={() =>
@@ -60,7 +64,7 @@ export function ExperienceList() {
           onClick={() => setIsAdding(true)}
           className="w-full rounded-md border-2 border-dashed border-slate-300 px-4 py-3 text-sm font-medium text-slate-600 hover:border-slate-400 hover:text-slate-700"
         >
-          + Add Experience
+          {t('forms.experience.addButton')}
         </button>
       )}
     </div>
@@ -69,23 +73,26 @@ export function ExperienceList() {
 
 function ExperienceItem({
   experience,
+  language,
   onEdit,
   onDelete,
   onToggleVisible,
 }: {
   experience: Experience
+  language: AppLanguage
   onEdit: () => void
   onDelete: () => void
   onToggleVisible: () => void
 }) {
-  const dateRange = formatDateRange(experience.startDate, experience.endDate)
+  const { t } = useI18n()
+  const dateRange = formatDateRange(experience.startDate, experience.endDate, language)
   const typeLabel =
     experience.type === 'assignment'
-      ? 'Assignment'
+      ? t('forms.experience.typeAssignment')
       : experience.type === 'employment'
-        ? 'Employment'
+        ? t('forms.experience.typeEmployment')
         : experience.type === 'custom'
-          ? experience.customType?.trim() || 'Custom'
+          ? experience.customType?.trim() || t('forms.experience.typeCustom')
           : ''
 
   return (
@@ -129,8 +136,8 @@ function ExperienceItem({
             <button
               onClick={onEdit}
               className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-gray-600 hover:bg-slate-100"
-              title="Edit"
-              aria-label="Edit"
+              title={t('common.actions.edit')}
+              aria-label={t('common.actions.edit')}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path
@@ -144,8 +151,8 @@ function ExperienceItem({
             <button
               onClick={onDelete}
               className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-gray-600 hover:bg-slate-100"
-              title="Delete"
-              aria-label="Delete"
+              title={t('common.actions.delete')}
+              aria-label={t('common.actions.delete')}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path
@@ -157,23 +164,7 @@ function ExperienceItem({
               </svg>
             </button>
           </div>
-          <button
-            type="button"
-            onClick={onToggleVisible}
-            className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-              experience.visible
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={experience.visible ? 'Hide from CV' : 'Show in CV'}
-            aria-label={experience.visible ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                experience.visible ? 'translate-x-3.5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <VisibilityToggle isVisible={experience.visible} onToggle={onToggleVisible} />
         </div>
       </div>
     </div>

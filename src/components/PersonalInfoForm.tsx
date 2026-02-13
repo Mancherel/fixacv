@@ -1,9 +1,12 @@
 import { useRef, useState } from 'react'
 import { useCVData } from '../context/CVContext'
 import { PhotoCropModal } from './PhotoCropModal'
+import { useI18n } from '../i18n/useI18n'
+import { VisibilityToggle } from './VisibilityToggle'
 
 export function PersonalInfoForm() {
   const { cvData, updatePersonalInfo, togglePersonalInfoVisibility } = useCVData()
+  const { t } = useI18n()
   const { personalInfo } = cvData
   const { personalInfoVisibility } = cvData
   const [pendingPhoto, setPendingPhoto] = useState<File | string | null>(null)
@@ -37,42 +40,31 @@ export function PersonalInfoForm() {
 
       <div className={personalInfoVisibility.photo ? '' : 'opacity-60'}>
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-gray-700">Photo</label>
-          <button
-            type="button"
-            onClick={() => togglePersonalInfoVisibility('photo')}
-            className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-              personalInfoVisibility.photo
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={personalInfoVisibility.photo ? 'Hide from CV' : 'Show in CV'}
-            aria-label={personalInfoVisibility.photo ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                personalInfoVisibility.photo ? 'translate-x-3.5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <label className="block text-sm font-medium text-gray-700">
+            {t('forms.personalInfo.photo')}
+          </label>
+          <VisibilityToggle
+            isVisible={personalInfoVisibility.photo}
+            onToggle={() => togglePersonalInfoVisibility('photo')}
+          />
         </div>
         <div className="mt-2 flex items-center gap-4">
           <div className="h-16 w-16 overflow-hidden rounded-full border border-gray-200 bg-gray-100">
             {personalInfo.photo ? (
               <img
                 src={personalInfo.photo}
-                alt="Profile"
+                alt={t('forms.personalInfo.profileAlt')}
                 className="h-full w-full object-cover"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
-                No photo
+                {t('forms.personalInfo.noPhoto')}
               </div>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
             <label className="cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50">
-              Upload Photo
+              {t('forms.personalInfo.uploadPhoto')}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -87,7 +79,7 @@ export function PersonalInfoForm() {
                 onClick={() => setPendingPhoto(personalInfo.photo || '')}
                 className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
               >
-                Edit
+                {t('forms.personalInfo.editPhoto')}
               </button>
             )}
             {personalInfo.photo && (
@@ -96,7 +88,7 @@ export function PersonalInfoForm() {
                 onClick={handleRemovePhoto}
                 className="rounded-md border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
               >
-                Remove
+                {t('forms.personalInfo.removePhoto')}
               </button>
             )}
           </div>
@@ -106,25 +98,12 @@ export function PersonalInfoForm() {
       <div className={personalInfoVisibility.name ? '' : 'opacity-60'}>
         <div className="flex items-center justify-between">
           <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-            Name
+            {t('forms.personalInfo.name')}
           </label>
-          <button
-            type="button"
-            onClick={() => togglePersonalInfoVisibility('name')}
-            className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-              personalInfoVisibility.name
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={personalInfoVisibility.name ? 'Hide from CV' : 'Show in CV'}
-            aria-label={personalInfoVisibility.name ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                personalInfoVisibility.name ? 'translate-x-3.5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <VisibilityToggle
+            isVisible={personalInfoVisibility.name}
+            onToggle={() => togglePersonalInfoVisibility('name')}
+          />
         </div>
         <input
           type="text"
@@ -132,32 +111,19 @@ export function PersonalInfoForm() {
           value={personalInfo.name}
           onChange={(e) => updatePersonalInfo({ name: e.target.value })}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="Your full name"
+          placeholder={t('forms.personalInfo.namePlaceholder')}
         />
       </div>
 
       <div className={personalInfoVisibility.professionalTitle ? '' : 'opacity-60'}>
         <div className="flex items-center justify-between">
           <label htmlFor="professionalTitle" className="block text-sm font-medium text-gray-700">
-            Professional Title
+            {t('forms.personalInfo.professionalTitle')}
           </label>
-          <button
-            type="button"
-            onClick={() => togglePersonalInfoVisibility('professionalTitle')}
-            className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-              personalInfoVisibility.professionalTitle
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={personalInfoVisibility.professionalTitle ? 'Hide from CV' : 'Show in CV'}
-            aria-label={personalInfoVisibility.professionalTitle ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                personalInfoVisibility.professionalTitle ? 'translate-x-3.5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <VisibilityToggle
+            isVisible={personalInfoVisibility.professionalTitle}
+            onToggle={() => togglePersonalInfoVisibility('professionalTitle')}
+          />
         </div>
         <input
           type="text"
@@ -165,33 +131,20 @@ export function PersonalInfoForm() {
           value={personalInfo.professionalTitle}
           onChange={(e) => updatePersonalInfo({ professionalTitle: e.target.value })}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="e.g., Senior Frontend Developer"
+          placeholder={t('forms.personalInfo.professionalTitlePlaceholder')}
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className={personalInfoVisibility.email ? '' : 'opacity-60'}>
           <div className="flex items-center justify-between">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
+              {t('forms.personalInfo.email')}
             </label>
-            <button
-              type="button"
-              onClick={() => togglePersonalInfoVisibility('email')}
-              className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-                personalInfoVisibility.email
-                  ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                  : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-              }`}
-              title={personalInfoVisibility.email ? 'Hide from CV' : 'Show in CV'}
-              aria-label={personalInfoVisibility.email ? 'Visible' : 'Hidden'}
-            >
-              <span
-                className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                  personalInfoVisibility.email ? 'translate-x-3.5' : 'translate-x-1'
-                }`}
-              />
-            </button>
+            <VisibilityToggle
+              isVisible={personalInfoVisibility.email}
+              onToggle={() => togglePersonalInfoVisibility('email')}
+            />
           </div>
           <input
             type="email"
@@ -199,32 +152,19 @@ export function PersonalInfoForm() {
             value={personalInfo.email}
             onChange={(e) => updatePersonalInfo({ email: e.target.value })}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="your@email.com"
+            placeholder={t('forms.personalInfo.emailPlaceholder')}
           />
         </div>
 
         <div className={personalInfoVisibility.phone ? '' : 'opacity-60'}>
           <div className="flex items-center justify-between">
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-              Phone
+              {t('forms.personalInfo.phone')}
             </label>
-            <button
-              type="button"
-              onClick={() => togglePersonalInfoVisibility('phone')}
-              className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-                personalInfoVisibility.phone
-                  ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                  : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-              }`}
-              title={personalInfoVisibility.phone ? 'Hide from CV' : 'Show in CV'}
-              aria-label={personalInfoVisibility.phone ? 'Visible' : 'Hidden'}
-            >
-              <span
-                className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                  personalInfoVisibility.phone ? 'translate-x-3.5' : 'translate-x-1'
-                }`}
-              />
-            </button>
+            <VisibilityToggle
+              isVisible={personalInfoVisibility.phone}
+              onToggle={() => togglePersonalInfoVisibility('phone')}
+            />
           </div>
           <input
             type="tel"
@@ -232,7 +172,7 @@ export function PersonalInfoForm() {
             value={personalInfo.phone}
             onChange={(e) => updatePersonalInfo({ phone: e.target.value })}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="+46 70 123 45 67"
+            placeholder={t('forms.personalInfo.phonePlaceholder')}
           />
         </div>
       </div>
@@ -240,25 +180,12 @@ export function PersonalInfoForm() {
       <div className={personalInfoVisibility.linkedin ? '' : 'opacity-60'}>
         <div className="flex items-center justify-between">
           <label htmlFor="linkedin" className="block text-sm font-medium text-gray-700">
-            LinkedIn
+            {t('forms.personalInfo.linkedin')}
           </label>
-          <button
-            type="button"
-            onClick={() => togglePersonalInfoVisibility('linkedin')}
-            className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-              personalInfoVisibility.linkedin
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={personalInfoVisibility.linkedin ? 'Hide from CV' : 'Show in CV'}
-            aria-label={personalInfoVisibility.linkedin ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                personalInfoVisibility.linkedin ? 'translate-x-3.5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <VisibilityToggle
+            isVisible={personalInfoVisibility.linkedin}
+            onToggle={() => togglePersonalInfoVisibility('linkedin')}
+          />
         </div>
         <input
           type="url"
@@ -266,32 +193,19 @@ export function PersonalInfoForm() {
           value={personalInfo.linkedin || ''}
           onChange={(e) => updatePersonalInfo({ linkedin: e.target.value })}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="https://linkedin.com/in/yourprofile"
+          placeholder={t('forms.personalInfo.linkedinPlaceholder')}
         />
       </div>
 
       <div className={personalInfoVisibility.website ? '' : 'opacity-60'}>
         <div className="flex items-center justify-between">
           <label htmlFor="website" className="block text-sm font-medium text-gray-700">
-            Website
+            {t('forms.personalInfo.website')}
           </label>
-          <button
-            type="button"
-            onClick={() => togglePersonalInfoVisibility('website')}
-            className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-              personalInfoVisibility.website
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={personalInfoVisibility.website ? 'Hide from CV' : 'Show in CV'}
-            aria-label={personalInfoVisibility.website ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                personalInfoVisibility.website ? 'translate-x-3.5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <VisibilityToggle
+            isVisible={personalInfoVisibility.website}
+            onToggle={() => togglePersonalInfoVisibility('website')}
+          />
         </div>
         <input
           type="url"
@@ -299,32 +213,19 @@ export function PersonalInfoForm() {
           value={personalInfo.website || ''}
           onChange={(e) => updatePersonalInfo({ website: e.target.value })}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="https://yourwebsite.com"
+          placeholder={t('forms.personalInfo.websitePlaceholder')}
         />
       </div>
 
       <div className={personalInfoVisibility.location ? '' : 'opacity-60'}>
         <div className="flex items-center justify-between">
           <label htmlFor="location" className="block text-sm font-medium text-gray-700">
-            Location
+            {t('forms.personalInfo.location')}
           </label>
-          <button
-            type="button"
-            onClick={() => togglePersonalInfoVisibility('location')}
-            className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-              personalInfoVisibility.location
-                ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-            }`}
-            title={personalInfoVisibility.location ? 'Hide from CV' : 'Show in CV'}
-            aria-label={personalInfoVisibility.location ? 'Visible' : 'Hidden'}
-          >
-            <span
-              className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                personalInfoVisibility.location ? 'translate-x-3.5' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <VisibilityToggle
+            isVisible={personalInfoVisibility.location}
+            onToggle={() => togglePersonalInfoVisibility('location')}
+          />
         </div>
         <input
           type="text"
@@ -332,7 +233,7 @@ export function PersonalInfoForm() {
           value={personalInfo.location || ''}
           onChange={(e) => updatePersonalInfo({ location: e.target.value })}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="Stockholm, Sweden"
+          placeholder={t('forms.personalInfo.locationPlaceholder')}
         />
       </div>
     </div>

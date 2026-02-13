@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { ListItem } from '../types'
+import { useI18n } from '../i18n/useI18n'
+import { VisibilityToggle } from './VisibilityToggle'
 
 interface SimpleListInputProps {
   label: string
@@ -14,9 +16,11 @@ export function SimpleListInput({
   items,
   onChange,
   placeholder,
-  emptyText = 'No items added yet',
+  emptyText,
 }: SimpleListInputProps) {
+  const { t } = useI18n()
   const [input, setInput] = useState('')
+  const resolvedEmptyText = emptyText ?? t('forms.lists.defaultEmpty')
 
   const handleAdd = () => {
     const value = input.trim()
@@ -69,7 +73,7 @@ export function SimpleListInput({
             onClick={handleAdd}
             className="rounded-md bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
           >
-            Add
+            {t('common.actions.add')}
           </button>
         </div>
       </div>
@@ -89,8 +93,8 @@ export function SimpleListInput({
                   type="button"
                   onClick={() => handleRemove(item.id)}
                   className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-gray-600 hover:bg-slate-100"
-                  title="Remove"
-                  aria-label="Remove"
+                  title={t('common.actions.remove')}
+                  aria-label={t('common.actions.remove')}
                 >
                   <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path
@@ -101,29 +105,16 @@ export function SimpleListInput({
                     />
                   </svg>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handleToggleVisible(item.id)}
-                  className={`relative inline-flex h-4 w-7 items-center rounded-full border transition-colors ${
-                    item.visible
-                      ? 'border-emerald-300 bg-emerald-200 hover:bg-emerald-300'
-                      : 'border-gray-300 bg-gray-200 hover:bg-gray-300'
-                  }`}
-                  title={item.visible ? 'Hide from CV' : 'Show in CV'}
-                  aria-label={item.visible ? 'Visible' : 'Hidden'}
-                >
-                  <span
-                    className={`inline-block h-3 w-3 transform rounded-full bg-white shadow transition-transform ${
-                      item.visible ? 'translate-x-3.5' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+                <VisibilityToggle
+                  isVisible={item.visible}
+                  onToggle={() => handleToggleVisible(item.id)}
+                />
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-xs text-gray-400">{emptyText}</p>
+        <p className="text-xs text-gray-400">{resolvedEmptyText}</p>
       )}
     </div>
   )
