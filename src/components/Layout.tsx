@@ -29,6 +29,7 @@ function resolveBounds(minValue: number, maxValue: number, fallbackValue: number
 export function Layout({ editor, preview }: LayoutProps) {
   const { t } = useI18n()
   const containerRef = useRef<HTMLDivElement>(null)
+  const separatorRef = useRef<HTMLDivElement>(null)
   const dragStateRef = useRef<DragState | null>(null)
 
   const [isDesktopLayout, setIsDesktopLayout] = useState(() => {
@@ -57,10 +58,30 @@ export function Layout({ editor, preview }: LayoutProps) {
     return () => mediaQuery.removeListener(handleChange)
   }, [])
 
-  useEffect(() => {
-    if (!isDragging) return
+  /* ── Separator drag via pointer capture ── */
 
-    const handlePointerMove = (event: PointerEvent) => {
+  useEffect(() => {
+    const sep = separatorRef.current
+    if (!sep) return
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return
+
+      const container = containerRef.current
+      if (!container) return
+
+      const axis: DragState['axis'] = isDesktopLayout ? 'x' : 'y'
+      dragStateRef.current = {
+        axis,
+        startCoord: axis === 'x' ? event.clientX : event.clientY,
+        startValue: axis === 'x' ? desktopEditorWidthPct : mobilePreviewHeightPct,
+      }
+      setIsDragging(true)
+      sep.setPointerCapture(event.pointerId)
+      event.preventDefault()
+    }
+
+    const onPointerMove = (event: PointerEvent) => {
       const dragState = dragStateRef.current
       const container = containerRef.current
       if (!dragState || !container) return
@@ -84,34 +105,25 @@ export function Layout({ editor, preview }: LayoutProps) {
       }
     }
 
-    const handlePointerEnd = () => {
+    const onPointerUp = (event: PointerEvent) => {
+      if (!dragStateRef.current) return
+      sep.releasePointerCapture(event.pointerId)
       dragStateRef.current = null
       setIsDragging(false)
     }
 
-    window.addEventListener('pointermove', handlePointerMove)
-    window.addEventListener('pointerup', handlePointerEnd)
-    window.addEventListener('pointercancel', handlePointerEnd)
+    sep.addEventListener('pointerdown', onPointerDown)
+    sep.addEventListener('pointermove', onPointerMove)
+    sep.addEventListener('pointerup', onPointerUp)
+    sep.addEventListener('pointercancel', onPointerUp)
 
     return () => {
-      window.removeEventListener('pointermove', handlePointerMove)
-      window.removeEventListener('pointerup', handlePointerEnd)
-      window.removeEventListener('pointercancel', handlePointerEnd)
+      sep.removeEventListener('pointerdown', onPointerDown)
+      sep.removeEventListener('pointermove', onPointerMove)
+      sep.removeEventListener('pointerup', onPointerUp)
+      sep.removeEventListener('pointercancel', onPointerUp)
     }
-  }, [isDragging])
-
-  const handleSeparatorPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return
-    const axis: DragState['axis'] = isDesktopLayout ? 'x' : 'y'
-
-    dragStateRef.current = {
-      axis,
-      startCoord: axis === 'x' ? event.clientX : event.clientY,
-      startValue: axis === 'x' ? desktopEditorWidthPct : mobilePreviewHeightPct,
-    }
-    setIsDragging(true)
-    event.preventDefault()
-  }
+  }, [isDesktopLayout, desktopEditorWidthPct, mobilePreviewHeightPct])
 
   const handleSeparatorKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const step = event.shiftKey ? 5 : 2
@@ -145,7 +157,7 @@ export function Layout({ editor, preview }: LayoutProps) {
       <div ref={containerRef} className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
         {/* Preview Panel */}
         <div
-          className="order-1 min-h-0 shrink-0 overflow-y-auto overflow-x-hidden bg-gray-100 pb-4 lg:order-3 lg:flex-1 lg:pb-16 print-full print-reset"
+          className="order-1 min-h-0 shrink-0 overflow-y-auto overflow-x-hidden bg-gray-100 pb-4 touch-manipulation lg:order-3 lg:flex-1 lg:pb-16 print-full print-reset"
           style={previewStyle}
         >
           {preview}
@@ -153,6 +165,7 @@ export function Layout({ editor, preview }: LayoutProps) {
 
         {/* Drag Separator */}
         <div
+          ref={separatorRef}
           role="separator"
           aria-orientation={isDesktopLayout ? 'vertical' : 'horizontal'}
           tabIndex={0}
@@ -161,12 +174,11 @@ export function Layout({ editor, preview }: LayoutProps) {
               ? t('layout.resizeEditorWidth')
               : t('layout.resizeEditorHeight')
           }
-          className={`order-2 z-10 shrink-0 bg-slate-100 print-hidden ${
+          className={`order-2 z-10 shrink-0 bg-slate-100 touch-none print-hidden ${
             isDesktopLayout
-              ? 'w-3 cursor-col-resize border-x border-slate-200 touch-none'
-              : 'h-4 cursor-row-resize border-y border-slate-200 touch-none'
+              ? 'w-3 cursor-col-resize border-x border-slate-200'
+              : 'h-4 cursor-row-resize border-y border-slate-200'
           }`}
-          onPointerDown={handleSeparatorPointerDown}
           onKeyDown={handleSeparatorKeyDown}
         >
           <div className="flex h-full w-full items-center justify-center">
@@ -180,7 +192,7 @@ export function Layout({ editor, preview }: LayoutProps) {
 
         {/* Editor Panel */}
         <div
-          className="order-3 min-h-0 flex-1 overflow-y-auto bg-slate-50 print-hidden lg:order-1 lg:flex-none"
+          className="order-3 min-h-0 flex-1 overflow-y-auto bg-slate-50 touch-pan-y print-hidden lg:order-1 lg:flex-none"
           style={editorStyle}
         >
           <div className="px-4 pb-6 pt-0 lg:px-6">{editor}</div>
