@@ -1,15 +1,32 @@
 import { useCVData } from '../context/CVContext'
 import { useI18n } from '../i18n/useI18n'
+import { VisibilityToggle } from './VisibilityToggle'
 
-export function ProfessionalStatementForm() {
+interface ProfessionalStatementFormProps {
+  isVisible?: boolean
+  onToggleVisibility?: () => void
+}
+
+export function ProfessionalStatementForm({
+  isVisible = true,
+  onToggleVisibility,
+}: ProfessionalStatementFormProps) {
   const { cvData, updateProfessionalStatement } = useCVData()
   const { t } = useI18n()
 
   return (
-    <div>
-      <label htmlFor="statement" className="block text-sm font-medium text-gray-700">
-        {t('forms.professionalStatement.label')}
-      </label>
+    <div className={isVisible ? '' : 'opacity-60'}>
+      <div className="flex items-center justify-between">
+        <label htmlFor="statement" className="block text-sm font-medium text-gray-700">
+          {t('forms.professionalStatement.label')}
+        </label>
+        {onToggleVisibility ? (
+          <VisibilityToggle
+            isVisible={isVisible}
+            onToggle={onToggleVisibility}
+          />
+        ) : null}
+      </div>
       <textarea
         id="statement"
         value={cvData.professionalStatement}

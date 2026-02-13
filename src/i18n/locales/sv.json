@@ -120,9 +120,9 @@
         "linkedInImportFailed": "Kunde inte importera LinkedIn-data. Kontrollera att du valde rätt CSV-filer."
       },
       "headerButtons": {
-        "newCv": "Nytt CV",
+        "newCv": "Ny",
         "save": "Spara",
-        "openFile": "Öppna fil",
+        "openFile": "Öppna",
         "importLinkedIn": "Importera från LinkedIn",
         "about": "Om",
         "faq": "FAQ"

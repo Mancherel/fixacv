@@ -28,10 +28,10 @@ export function VisibilityToggle({
         }
         onToggle()
       }}
-      className={`${sizeClass} inline-flex items-center justify-center rounded-md border transition-colors ${
+      className={`${sizeClass} inline-flex items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 ${
         isVisible
-          ? 'border-slate-300 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-800'
-          : 'border-slate-200 bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-500'
+          ? 'text-slate-600 hover:text-slate-800'
+          : 'text-slate-400 hover:text-slate-500'
       } ${className}`.trim()}
       title={visibilityTitle(isVisible)}
       aria-label={visibilityAria(isVisible)}

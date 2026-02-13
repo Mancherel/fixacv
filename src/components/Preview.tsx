@@ -1068,7 +1068,7 @@ function HeaderBlock() {
 
   return (
     <div data-block-id="header" data-editor-section-target="personalInfo">
-      <div className="border-b border-gray-300 pb-2">
+      <div className="pb-0">
         {showName && <h1 className="text-[22px] font-semibold text-gray-900">{showName}</h1>}
         {showTitle && (
           <p className="mt-0.5 text-[11px] uppercase tracking-[0.18em] text-gray-500">
@@ -1083,9 +1083,16 @@ function HeaderBlock() {
 function StatementBlock() {
   const { cvData } = useCVData()
   if (!cvData.professionalStatement) return null
+  const hasVisibleRole =
+    cvData.personalInfoVisibility.professionalTitle &&
+    cvData.personalInfo.professionalTitle?.trim().length > 0
 
   return (
-    <div data-block-id="statement" data-editor-section-target="professionalStatement">
+    <div
+      data-block-id="statement"
+      data-editor-section-target="professionalStatement"
+      className={hasVisibleRole ? '-mt-2' : ''}
+    >
       <p className="text-[10.5px] leading-snug text-gray-700">
         {cvData.professionalStatement}
       </p>
@@ -1110,7 +1117,6 @@ function ExperienceBlock({
   const showTitle = exp.title?.trim()
   const showDescription = exp.description?.trim()
   const visibleTags = exp.tags.filter((tag) => tag.visible && tag.name.trim())
-  const hasDetails = Boolean(showCompany || showTitle || showDescription || visibleTags.length || dateText)
   const typeLabel =
     exp.type === 'assignment'
       ? t('forms.experience.typeAssignment')
@@ -1123,29 +1129,34 @@ function ExperienceBlock({
     <div
       data-block-id={block.id}
       data-editor-section-target="experiences"
-      className="page-break-inside-avoid border-b border-gray-100 pb-2 last:border-b-0 last:pb-0"
+      className="page-break-inside-avoid border-b border-gray-100 pb-1.5 last:border-b-0 last:pb-0"
     >
-      {typeLabel && hasDetails && (
-        <p className="mb-1 text-[9px] uppercase tracking-[0.2em] text-gray-400">
-          {typeLabel}
-        </p>
-      )}
-      {(showCompany || dateText) && (
-        <div className="flex items-baseline justify-between">
-          {showCompany ? (
-            <h3 className="mb-0.5 text-xs font-semibold text-gray-900">{showCompany}</h3>
-          ) : (
-            <span />
-          )}
-          {dateText ? <span className="text-[10px] text-gray-500">{dateText}</span> : null}
+      {(showCompany || dateText || typeLabel) && (
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0 flex items-center gap-1.5">
+            {showCompany ? (
+              <h3 className="mb-0 text-xs font-semibold leading-tight text-gray-900">
+                {showCompany}
+              </h3>
+            ) : null}
+            {showCompany && typeLabel ? <span className="text-gray-300">•</span> : null}
+            {typeLabel ? (
+              <span className="text-[10px] leading-none text-gray-500">{typeLabel}</span>
+            ) : null}
+          </div>
+          {dateText ? <span className="shrink-0 text-[10px] leading-none text-gray-500">{dateText}</span> : null}
         </div>
       )}
-      {showTitle ? <p className="text-[10.5px] font-medium text-gray-800">{showTitle}</p> : null}
+      {showTitle ? (
+        <p className="mt-0.5 text-[10px] leading-tight text-gray-700">
+          <span className="font-medium text-gray-800">{showTitle}</span>
+        </p>
+      ) : null}
       {showDescription && (
         <p className="mt-0.5 text-[10px] leading-snug text-gray-600">{exp.description}</p>
       )}
       {visibleTags.length > 0 && (
-        <div className="mt-1 flex flex-wrap gap-0.5">
+        <div className="mt-0.5 flex flex-wrap gap-0.5">
           {visibleTags.map((tag) => (
             <span
               key={tag.id}

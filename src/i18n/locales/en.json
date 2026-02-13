@@ -120,9 +120,9 @@
         "linkedInImportFailed": "Failed to import LinkedIn data. Please make sure you selected the correct CSV files."
       },
       "headerButtons": {
-        "newCv": "New CV",
+        "newCv": "New",
         "save": "Save",
-        "openFile": "Open file",
+        "openFile": "Open",
         "importLinkedIn": "Import from LinkedIn",
         "about": "About",
         "faq": "FAQ"

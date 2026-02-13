@@ -93,6 +93,9 @@ function ensureJsonExtension(filename: string) {
 
 const MOBILE_LAYOUT_QUERY = '(max-width: 1023px)'
 const DEFAULT_MOBILE_SECTION: EditorSectionId = 'personalInfo'
+const EDITOR_MOBILE_SECTION_ORDER = SECTION_ORDER.filter(
+  (section): section is EditorSectionId => section !== 'professionalStatement',
+)
 
 export function Editor() {
   const {
@@ -114,6 +117,8 @@ export function Editor() {
   const [showFaq, setShowFaq] = useState(false)
   const [saveFileName, setSaveFileName] = useState('')
   const [collapseSignal, setCollapseSignal] = useState(0)
+  const [editingTitleSection, setEditingTitleSection] = useState<EditorSectionId | null>(null)
+  const [titleDraft, setTitleDraft] = useState('')
   const [isJsonDragActive, setIsJsonDragActive] = useState(false)
   const [isLinkedInDragActive, setIsLinkedInDragActive] = useState(false)
   const [isMobileLayout, setIsMobileLayout] = useState(() => {
@@ -346,6 +351,7 @@ export function Editor() {
     cvData.portfolio.length > 0 ||
     hasPreferences
   const cvLanguage = cvData.localization.cvLanguage
+  const cvLanguageLabel = getEditorControlText(cvLanguage, 'cvLanguageLabel')
   const languageOverrides = cvData.localization.sectionTitleOverrides[cvLanguage] ?? {}
 
   const downloadJson = (filename?: string) => {
@@ -433,9 +439,11 @@ export function Editor() {
   }
 
   const openMobileSection = (section: EditorSectionId, focusField = false) => {
+    const containerSection =
+      section === 'professionalStatement' ? 'personalInfo' : section
     mobileChipsVisibleRef.current = true
     setIsMobileChipsVisible(true)
-    setActiveMobileSection(section)
+    setActiveMobileSection(containerSection)
     scrollToSection(section, focusField)
   }
 
@@ -452,42 +460,86 @@ export function Editor() {
   const resolveDefaultPreviewSectionTitle = (section: EditorSectionId) =>
     getPreviewSectionTitle(cvLanguage, section)
 
-  const renderSectionTitleOverride = (section: EditorSectionId) => {
-    if (!sectionHasPreviewHeading(section)) return null
+  const startSectionTitleEdit = (section: EditorSectionId) => {
+    if (!sectionHasPreviewHeading(section)) return
+    setEditingTitleSection(section)
+    setTitleDraft(languageOverrides[section] ?? '')
+  }
 
-    const currentOverride = languageOverrides[section] ?? ''
-    const hasOverride = currentOverride.trim().length > 0
+  const commitSectionTitleEdit = (section: EditorSectionId) => {
+    const trimmed = titleDraft.trim()
+    if (trimmed.length === 0) {
+      clearSectionTitleOverride(section)
+    } else {
+      setSectionTitleOverride(section, trimmed)
+    }
+    setEditingTitleSection(null)
+    setTitleDraft('')
+  }
+
+  const cancelSectionTitleEdit = () => {
+    setEditingTitleSection(null)
+    setTitleDraft('')
+  }
+
+  const renderEditableSectionTitle = (section: EditorSectionId) => {
+    const title = resolveEditorSectionTitle(section)
+
+    if (!sectionHasPreviewHeading(section)) {
+      return title
+    }
+
+    if (editingTitleSection === section) {
+      return (
+        <div
+          className="flex items-center"
+          onClick={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          <input
+            value={titleDraft}
+            onChange={(event) => setTitleDraft(event.target.value)}
+            onBlur={() => commitSectionTitleEdit(section)}
+            placeholder={resolveDefaultPreviewSectionTitle(section)}
+            autoFocus
+            className="h-8 w-full min-w-[12rem] rounded-md border border-slate-200 bg-white px-2.5 text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                commitSectionTitleEdit(section)
+              } else if (event.key === 'Escape') {
+                event.preventDefault()
+                cancelSectionTitleEdit()
+              }
+            }}
+          />
+        </div>
+      )
+    }
 
     return (
-      <details className="mb-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-        <summary className="cursor-pointer text-xs font-semibold text-slate-600">
-          {getEditorControlText(cvLanguage, 'customizeHeading')}
-        </summary>
-        <div className="mt-2">
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            {getEditorControlText(cvLanguage, 'customHeadingLabel')}
-          </label>
-          <div className="mt-1 flex flex-col gap-2 sm:flex-row">
-            <input
-              value={currentOverride}
-              onChange={(event) => setSectionTitleOverride(section, event.target.value)}
-              placeholder={resolveDefaultPreviewSectionTitle(section)}
-              className="h-8 w-full rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+      <span className="inline-flex items-center gap-1.5">
+        <span>{title}</span>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            startSectionTitleEdit(section)
+          }}
+          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          title={getEditorControlText(cvLanguage, 'customizeHeading')}
+          aria-label={getEditorControlText(cvLanguage, 'customizeHeading')}
+        >
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.7}
+              d="M16.5 4.5l3 3L8 19H5v-3L16.5 4.5z"
             />
-            <button
-              type="button"
-              onClick={() => clearSectionTitleOverride(section)}
-              disabled={!hasOverride}
-              className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {getEditorControlText(cvLanguage, 'resetHeading')}
-            </button>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-400">
-            {getEditorControlText(cvLanguage, 'customHeadingPlaceholder')}
-          </p>
-        </div>
-      </details>
+          </svg>
+        </button>
+      </span>
     )
   }
 
@@ -961,14 +1013,30 @@ export function Editor() {
               {t('editor.headerButtons.faq')}
             </button>
             <div className="flex h-8 shrink-0 items-stretch overflow-hidden rounded-md border border-slate-300 bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200">
-              <label className="flex items-center border-r border-slate-300 bg-slate-50 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                {getEditorControlText(cvLanguage, 'cvLanguageLabel')}
+              <label
+                htmlFor="cv-language-select"
+                className="flex items-center border-r border-slate-300 bg-slate-50 px-2.5 text-slate-500"
+                aria-label={cvLanguageLabel}
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="9" strokeWidth={1.7} />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 12h18" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.7}
+                    d="M12 3c2.5 2.6 4 5.7 4 9s-1.5 6.4-4 9c-2.5-2.6-4-5.7-4-9s1.5-6.4 4-9z"
+                  />
+                </svg>
+                <span className="sr-only">{cvLanguageLabel}</span>
               </label>
               <div className="relative flex h-full items-center">
                 <select
+                  id="cv-language-select"
                   value={cvLanguage}
                   onChange={(event) => setCVLanguage(event.target.value as AppLanguage)}
-                  className="editor-language-select h-full w-[7.5rem] appearance-none border-0 bg-white pl-3 pr-10 text-sm font-semibold leading-none text-slate-700 focus:outline-none"
+                  aria-label={cvLanguageLabel}
+                  className="editor-language-select h-full w-[7.5rem] appearance-none border-0 bg-white pl-3 pr-10 text-[11px] font-semibold leading-none text-slate-700 focus:outline-none sm:text-xs"
                 >
                   {SUPPORTED_LANGUAGES.map((languageOption) => (
                     <option key={languageOption} value={languageOption}>
@@ -1007,7 +1075,7 @@ export function Editor() {
         >
           <div className="overflow-x-auto no-scrollbar">
             <div className="flex w-max min-w-full items-center gap-2 pl-3 pr-3">
-              {SECTION_ORDER.map((section) => (
+              {EDITOR_MOBILE_SECTION_ORDER.map((section) => (
                 <button
                   key={section}
                   type="button"
@@ -1029,138 +1097,124 @@ export function Editor() {
       <div className="space-y-4">
         <div data-editor-section="personalInfo">
           <Section
-            title={resolveEditorSectionTitle('personalInfo')}
+            title={renderEditableSectionTitle('personalInfo')}
             collapseSignal={collapseSignal}
             isOpen={isMobileLayout ? activeMobileSection === 'personalInfo' : undefined}
             onToggleOpen={isMobileLayout ? () => toggleMobileSection('personalInfo') : undefined}
           >
-            {renderSectionTitleOverride('personalInfo')}
             <PersonalInfoForm />
-          </Section>
-        </div>
-
-        <div data-editor-section="professionalStatement">
-          <Section
-            title={resolveEditorSectionTitle('professionalStatement')}
-            onToggleVisibility={() => toggleSectionVisibility('professionalStatement')}
-            isVisible={cvData.sectionVisibility.professionalStatement}
-            collapseSignal={collapseSignal}
-            isOpen={isMobileLayout ? activeMobileSection === 'professionalStatement' : undefined}
-            onToggleOpen={isMobileLayout ? () => toggleMobileSection('professionalStatement') : undefined}
-          >
-            {renderSectionTitleOverride('professionalStatement')}
-            <ProfessionalStatementForm />
+            <div
+              data-editor-section="professionalStatement"
+              className="mt-6 border-t border-slate-200 pt-4"
+            >
+              <ProfessionalStatementForm
+                isVisible={cvData.sectionVisibility.professionalStatement}
+                onToggleVisibility={() => toggleSectionVisibility('professionalStatement')}
+              />
+            </div>
           </Section>
         </div>
 
         <div data-editor-section="experiences">
           <Section
-            title={resolveEditorSectionTitle('experiences')}
+            title={renderEditableSectionTitle('experiences')}
             onToggleVisibility={() => toggleSectionVisibility('experiences')}
             isVisible={cvData.sectionVisibility.experiences}
             collapseSignal={collapseSignal}
             isOpen={isMobileLayout ? activeMobileSection === 'experiences' : undefined}
             onToggleOpen={isMobileLayout ? () => toggleMobileSection('experiences') : undefined}
           >
-            {renderSectionTitleOverride('experiences')}
             <ExperienceList />
           </Section>
         </div>
 
         <div data-editor-section="education">
           <Section
-            title={resolveEditorSectionTitle('education')}
+            title={renderEditableSectionTitle('education')}
             onToggleVisibility={() => toggleSectionVisibility('education')}
             isVisible={cvData.sectionVisibility.education}
             collapseSignal={collapseSignal}
             isOpen={isMobileLayout ? activeMobileSection === 'education' : undefined}
             onToggleOpen={isMobileLayout ? () => toggleMobileSection('education') : undefined}
           >
-            {renderSectionTitleOverride('education')}
             <EducationList />
           </Section>
         </div>
 
         <div data-editor-section="competencies">
           <Section
-            title={resolveEditorSectionTitle('competencies')}
+            title={renderEditableSectionTitle('competencies')}
             onToggleVisibility={() => toggleSectionVisibility('competencies')}
             isVisible={cvData.sectionVisibility.competencies}
             collapseSignal={collapseSignal}
             isOpen={isMobileLayout ? activeMobileSection === 'competencies' : undefined}
             onToggleOpen={isMobileLayout ? () => toggleMobileSection('competencies') : undefined}
           >
-            {renderSectionTitleOverride('competencies')}
             <CompetenciesList />
           </Section>
         </div>
 
         <div data-editor-section="languages">
           <Section
-            title={resolveEditorSectionTitle('languages')}
+            title={renderEditableSectionTitle('languages')}
             onToggleVisibility={() => toggleSectionVisibility('languages')}
             isVisible={cvData.sectionVisibility.languages}
             collapseSignal={collapseSignal}
             isOpen={isMobileLayout ? activeMobileSection === 'languages' : undefined}
             onToggleOpen={isMobileLayout ? () => toggleMobileSection('languages') : undefined}
           >
-            {renderSectionTitleOverride('languages')}
             <LanguagesForm />
           </Section>
         </div>
 
         <div data-editor-section="other">
           <Section
-            title={resolveEditorSectionTitle('other')}
+            title={renderEditableSectionTitle('other')}
             onToggleVisibility={() => toggleSectionVisibility('other')}
             isVisible={cvData.sectionVisibility.other}
             collapseSignal={collapseSignal}
             isOpen={isMobileLayout ? activeMobileSection === 'other' : undefined}
             onToggleOpen={isMobileLayout ? () => toggleMobileSection('other') : undefined}
           >
-            {renderSectionTitleOverride('other')}
             <OtherForm />
           </Section>
         </div>
 
         <div data-editor-section="certifications">
           <Section
-            title={resolveEditorSectionTitle('certifications')}
+            title={renderEditableSectionTitle('certifications')}
             onToggleVisibility={() => toggleSectionVisibility('certifications')}
             isVisible={cvData.sectionVisibility.certifications}
             collapseSignal={collapseSignal}
             isOpen={isMobileLayout ? activeMobileSection === 'certifications' : undefined}
             onToggleOpen={isMobileLayout ? () => toggleMobileSection('certifications') : undefined}
           >
-            {renderSectionTitleOverride('certifications')}
             <CertificationsForm />
           </Section>
         </div>
 
         <div data-editor-section="portfolio">
           <Section
-            title={resolveEditorSectionTitle('portfolio')}
+            title={renderEditableSectionTitle('portfolio')}
             onToggleVisibility={() => toggleSectionVisibility('portfolio')}
             isVisible={cvData.sectionVisibility.portfolio}
             collapseSignal={collapseSignal}
             isOpen={isMobileLayout ? activeMobileSection === 'portfolio' : undefined}
             onToggleOpen={isMobileLayout ? () => toggleMobileSection('portfolio') : undefined}
           >
-            {renderSectionTitleOverride('portfolio')}
             <PortfolioForm />
           </Section>
         </div>
 
         <div data-editor-section="preferences">
           <Section
-            title={resolveEditorSectionTitle('preferences')}
+            title={renderEditableSectionTitle('preferences')}
             onToggleVisibility={() => toggleSectionVisibility('preferences')}
             isVisible={cvData.sectionVisibility.preferences}
             collapseSignal={collapseSignal}
             isOpen={isMobileLayout ? activeMobileSection === 'preferences' : undefined}
             onToggleOpen={isMobileLayout ? () => toggleMobileSection('preferences') : undefined}
           >
-            {renderSectionTitleOverride('preferences')}
             <PreferencesForm />
           </Section>
         </div>

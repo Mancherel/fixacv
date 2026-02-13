@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from 'react'
 import { VisibilityToggle } from './VisibilityToggle'
 
 interface SectionProps {
-  title: string
+  title: ReactNode
   children: ReactNode
   defaultOpen?: boolean
   onToggleVisibility?: () => void
