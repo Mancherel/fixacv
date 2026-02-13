@@ -1,0 +1,315 @@
+{
+  "languages": {
+    "en": "English",
+    "sv": "Swedish"
+  },
+  "editor": {
+    "sectionTitles": {
+      "personalInfo": "Personal Information",
+      "professionalStatement": "Professional Statement",
+      "experiences": "Work Experience",
+      "education": "Education",
+      "competencies": "Competencies",
+      "languages": "Languages",
+      "other": "Other",
+      "certifications": "Courses / Certifications",
+      "portfolio": "Portfolio",
+      "preferences": "Preferences"
+    },
+    "controls": {
+      "cvLanguageLabel": "CV language",
+      "customizeHeading": "Customize heading",
+      "customHeadingLabel": "Custom heading",
+      "customHeadingPlaceholder": "Leave empty to use translation",
+      "resetHeading": "Reset"
+    }
+  },
+  "preview": {
+    "sectionTitles": {
+      "personalInfo": "Contact",
+      "professionalStatement": "Professional Statement",
+      "experiences": "Experience",
+      "education": "Education",
+      "competencies": "Competencies",
+      "languages": "Languages",
+      "other": "Other",
+      "certifications": "Courses / Certifications",
+      "portfolio": "Portfolio",
+      "preferences": "Preferences"
+    },
+    "competencyLevels": {
+      "expert": "Expert",
+      "advanced": "Advanced",
+      "proficient": "Proficient"
+    },
+    "preferenceLabels": {
+      "workMode": "Work mode",
+      "availability": "Availability",
+      "location": "Location"
+    },
+    "emptyState": "Start filling in your information to see your CV preview"
+  },
+  "ui": {
+    "common": {
+      "actions": {
+        "add": "Add",
+        "update": "Update",
+        "cancel": "Cancel",
+        "close": "Close",
+        "save": "Save",
+        "delete": "Delete",
+        "edit": "Edit",
+        "remove": "Remove"
+      },
+      "visibility": {
+        "hideFromCv": "Hide from CV",
+        "showInCv": "Show in CV",
+        "visible": "Visible",
+        "hidden": "Hidden"
+      },
+      "status": {
+        "ongoing": "Ongoing"
+      },
+      "meta": {
+        "characters": "{{count}} characters"
+      }
+    },
+    "layout": {
+      "resizeEditorWidth": "Resize editor width",
+      "resizeEditorHeight": "Resize editor height"
+    },
+    "header": {
+      "tagline": "Free CV builder. Your data stays with you.",
+      "printPdfMobile": "Print PDF",
+      "printPdfDesktop": "Print / Save PDF",
+      "closeDialog": "Close"
+    },
+    "kofi": {
+      "mobilePrefix": "Buy me a",
+      "desktopPrefix": "Buy me",
+      "items": {
+        "tinyPlant": "a tiny plant",
+        "iceCream": "an ice cream",
+        "coffee": "a coffee",
+        "donut": "a donut",
+        "mango": "a mango",
+        "sushi": "some sushi",
+        "dimSum": "dim sum",
+        "ikeaFlatpack": "an IKEA flatpack",
+        "energyDrink": "an energy drink",
+        "potato": "a potato",
+        "socks": "a pair of socks",
+        "yarn": "some yarn",
+        "filamentRoll": "a filament roll",
+        "game": "a game",
+        "taco": "a taco",
+        "ramen": "some ramen",
+        "beer": "a beer",
+        "fullCharge": "a full charge",
+        "beardTrim": "a beard trim"
+      }
+    },
+    "previewPanel": {
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out"
+    },
+    "editor": {
+      "alerts": {
+        "jsonImportFailed": "Failed to import data. Please check the file format.",
+        "linkedInImportSuccess": "LinkedIn data imported successfully!",
+        "linkedInImportFailed": "Failed to import LinkedIn data. Please make sure you selected the correct CSV files."
+      },
+      "headerButtons": {
+        "newCv": "New CV",
+        "save": "Save",
+        "openFile": "Open file",
+        "importLinkedIn": "Import from LinkedIn",
+        "about": "About",
+        "faq": "FAQ"
+      },
+      "modals": {
+        "closeAria": "Close",
+        "newCv": {
+          "title": "Start a new CV?",
+          "subtitle": "This clears the current editor and preview.",
+          "body": "Your current CV will be replaced. You can download a backup first if you want to keep it.",
+          "downloadCurrent": "Download current CV",
+          "noContent": "No content yet, nothing to back up.",
+          "startNew": "Start new"
+        },
+        "saveCv": {
+          "title": "Save your CV",
+          "subtitle": "Download a JSON backup you can reopen later.",
+          "body": "Keep this file safe. You can open it again from \"Open file\".",
+          "filename": "Filename",
+          "downloadJson": "Download JSON"
+        },
+        "openCv": {
+          "title": "Open a CV file",
+          "subtitle": "Import a JSON backup to continue editing.",
+          "body": "Opening a file replaces your current CV. Download a backup first if you want to keep it.",
+          "dropZone": "Drop a JSON file here or click to browse."
+        },
+        "linkedInImport": {
+          "title": "Import from LinkedIn",
+          "subtitle": "Use LinkedIn CSV exports to prefill your CV faster.",
+          "howToTitle": "How to export from LinkedIn",
+          "step1": "Go to LinkedIn Settings & Privacy",
+          "step2": "Open \"Data privacy\" -> \"Get a copy of your data\"",
+          "step3": "Select the data you want and download",
+          "step4": "Extract the ZIP file and upload the CSVs here",
+          "supportedTitle": "Supported CSV files",
+          "file1": "Profile.csv (name, headline, summary)",
+          "file2": "Positions.csv (work experience)",
+          "file3": "Education.csv (education history)",
+          "file4": "Skills.csv (competencies)",
+          "file5": "Courses.csv (courses / certifications)",
+          "note": "You can upload one or many files. Imported sections replace the matching section in your CV, other sections stay untouched. Importing can overwrite existing data in those sections.",
+          "dropZone": "Drop LinkedIn CSV files here or click to browse."
+        },
+        "faq": {
+          "title": "FAQ",
+          "subtitle": "Answers to common questions."
+        },
+        "about": {
+          "title": "About fixacv",
+          "subtitle": "Free CV builder with local-first data.",
+          "line1": "Everything runs in your browser. Your data stays on your device unless you export it.",
+          "line2": "Save JSON backups so you can reopen your CV later.",
+          "line3": "Import LinkedIn CSV exports to get started faster.",
+          "line4": "Print or save to PDF when your CV is ready.",
+          "openSourcePrefix": "Open source on",
+          "openSourceLink": "GitHub",
+          "supportMe": "Support me",
+          "gotIt": "Got it"
+        }
+      }
+    },
+    "forms": {
+      "personalInfo": {
+        "photo": "Photo",
+        "noPhoto": "No photo",
+        "uploadPhoto": "Upload photo",
+        "editPhoto": "Edit",
+        "removePhoto": "Remove",
+        "profileAlt": "Profile photo",
+        "name": "Name",
+        "namePlaceholder": "Your full name",
+        "professionalTitle": "Professional title",
+        "professionalTitlePlaceholder": "e.g., Senior Frontend Developer",
+        "email": "Email",
+        "emailPlaceholder": "your@email.com",
+        "phone": "Phone",
+        "phonePlaceholder": "+46 70 123 45 67",
+        "linkedin": "LinkedIn",
+        "linkedinPlaceholder": "https://linkedin.com/in/yourprofile",
+        "website": "Website",
+        "websitePlaceholder": "https://yourwebsite.com",
+        "location": "Location",
+        "locationPlaceholder": "Stockholm, Sweden"
+      },
+      "professionalStatement": {
+        "label": "Professional statement",
+        "placeholder": "A brief professional summary (2-3 sentences)...",
+        "characters": "{{count}} characters"
+      },
+      "experience": {
+        "type": "Type",
+        "typeAssignment": "Assignment",
+        "typeEmployment": "Employment",
+        "typeCustom": "Custom",
+        "typeNone": "None",
+        "customTypePlaceholder": "Custom type label",
+        "company": "Company",
+        "titleRole": "Title/Role",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "ongoing": "Ongoing",
+        "description": "Description",
+        "tags": "Tags",
+        "tagsPlaceholder": "e.g., React, TypeScript",
+        "addButton": "+ Add Experience",
+        "confirmDelete": "Delete this experience?"
+      },
+      "education": {
+        "institution": "Institution",
+        "institutionPlaceholder": "University name",
+        "degreeProgram": "Degree/Program",
+        "degreePlaceholder": "e.g., Bachelor of Science in Computer Science",
+        "startYear": "Start year",
+        "endYear": "End year",
+        "description": "Description",
+        "tags": "Tags",
+        "tagsPlaceholder": "e.g., AI, Research",
+        "addButton": "+ Add Education",
+        "confirmDelete": "Delete this education?"
+      },
+      "competencies": {
+        "addSkillTitle": "Add skill",
+        "skillNamePlaceholder": "Skill name...",
+        "confirmDelete": "Delete this skill?",
+        "dropHere": "Drop here",
+        "noSkillsForLevel": "No {{level}} skills",
+        "noSkillsYet": "No skills added yet"
+      },
+      "preferences": {
+        "workMode": "Work mode",
+        "workModeFlexible": "Flexible",
+        "workModeRemote": "Remote",
+        "workModeHybrid": "Hybrid",
+        "workModeOnSite": "On-site",
+        "workModeHint": "Leave as Flexible if you have no preference.",
+        "availability": "Availability / notice period",
+        "availabilityPlaceholder": "e.g., 1 month notice",
+        "locationPreference": "Location preference",
+        "locationPreferencePlaceholder": "e.g., Stockholm area"
+      },
+      "lists": {
+        "languagesLabel": "Add language",
+        "languagesPlaceholder": "e.g., Swedish (Native)",
+        "languagesEmpty": "No languages added yet",
+        "otherLabel": "Add misc item",
+        "otherPlaceholder": "e.g., Driver's license B",
+        "otherEmpty": "No misc items added yet",
+        "certificationsLabel": "Add certification / course",
+        "certificationsPlaceholder": "e.g., AWS Solutions Architect (2023)",
+        "certificationsEmpty": "No certifications added yet",
+        "portfolioLabel": "Add portfolio link",
+        "portfolioPlaceholder": "e.g., https://yourportfolio.com/project",
+        "portfolioEmpty": "No portfolio links added yet",
+        "defaultEmpty": "No items added yet"
+      },
+      "photoCrop": {
+        "title": "Crop photo",
+        "subtitle": "Drag to reposition and zoom to crop.",
+        "zoom": "Zoom",
+        "savePhoto": "Save photo",
+        "cropAlt": "Crop"
+      }
+    },
+    "faq": {
+      "items": {
+        "whatIs": {
+          "q": "What is fixacv?",
+          "a": "fixacv is a free, privacy-first CV/resume builder. Everything runs in your browser and your data stays on your device."
+        },
+        "account": {
+          "q": "Do I need an account?",
+          "a": "No. There is no signup or cloud storage. Your CV is saved locally in your browser."
+        },
+        "exportPdf": {
+          "q": "Can I export to PDF?",
+          "a": "Yes. The preview matches the PDF, and the export is ready for printing and sending."
+        },
+        "linkedIn": {
+          "q": "Can I import from LinkedIn?",
+          "a": "Yes. You can import LinkedIn CSV exports to prefill your profile, experience, education, skills, and courses."
+        },
+        "languages": {
+          "q": "Is it available in English and Swedish?",
+          "a": "Yes. The app supports English and Swedish content, with a focus on clean, Scandinavian-style CVs."
+        }
+      }
+    }
+  }
+}

@@ -49,4 +49,11 @@ export const getDefaultCVData = (): CVData => ({
     portfolio: true,
     preferences: true,
   },
+  localization: {
+    cvLanguage: 'en',
+    sectionTitleOverrides: {
+      en: {},
+      sv: {},
+    },
+  },
 })

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useCVData } from '../context/CVContext'
 import { Section } from './Section'
 import { PersonalInfoForm } from './PersonalInfoForm'
@@ -13,6 +13,21 @@ import { CertificationsForm } from './CertificationsForm'
 import { PortfolioForm } from './PortfolioForm'
 import { FaqSection } from './FaqSection'
 import { importLinkedInData } from '../utils/linkedinImport'
+import type { AppLanguage } from '../types'
+import {
+  PREVIEW_FOCUS_SECTION_EVENT,
+  type EditorSectionId,
+  type PreviewFocusSectionDetail,
+} from '../types/editorNavigation'
+import {
+  SECTION_ORDER,
+  SUPPORTED_LANGUAGES,
+  getEditorControlText,
+  getEditorSectionTitle,
+  getLanguageDisplayName,
+  getPreviewSectionTitle,
+} from '../i18n'
+import { useI18n } from '../i18n/useI18n'
 
 const KOFI_URL = 'https://ko-fi.com/mancherel'
 
@@ -21,10 +36,11 @@ interface ModalProps {
   title: string
   subtitle?: string
   onClose: () => void
+  closeAriaLabel: string
   children: React.ReactNode
 }
 
-function Modal({ open, title, subtitle, onClose, children }: ModalProps) {
+function Modal({ open, title, subtitle, onClose, closeAriaLabel, children }: ModalProps) {
   if (!open) return null
 
   return (
@@ -44,7 +60,7 @@ function Modal({ open, title, subtitle, onClose, children }: ModalProps) {
           <button
             className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={closeAriaLabel}
             type="button"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -75,8 +91,21 @@ function ensureJsonExtension(filename: string) {
   return `${trimmed}.json`
 }
 
+const MOBILE_LAYOUT_QUERY = '(max-width: 1023px)'
+const DEFAULT_MOBILE_SECTION: EditorSectionId = 'personalInfo'
+
 export function Editor() {
-  const { cvData, toggleSectionVisibility, importData, exportData, clearAllData } = useCVData()
+  const {
+    cvData,
+    toggleSectionVisibility,
+    setCVLanguage,
+    setSectionTitleOverride,
+    clearSectionTitleOverride,
+    importData,
+    exportData,
+    clearAllData,
+  } = useCVData()
+  const { t } = useI18n()
   const [showNewCv, setShowNewCv] = useState(false)
   const [showSave, setShowSave] = useState(false)
   const [showOpenFile, setShowOpenFile] = useState(false)
@@ -87,11 +116,213 @@ export function Editor() {
   const [collapseSignal, setCollapseSignal] = useState(0)
   const [isJsonDragActive, setIsJsonDragActive] = useState(false)
   const [isLinkedInDragActive, setIsLinkedInDragActive] = useState(false)
+  const [isMobileLayout, setIsMobileLayout] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia(MOBILE_LAYOUT_QUERY).matches
+  })
+  const [activeMobileSection, setActiveMobileSection] = useState<EditorSectionId | null>(
+    DEFAULT_MOBILE_SECTION,
+  )
+  const [mobileChipTopOffset, setMobileChipTopOffset] = useState(56)
+  const [isMobileChipsVisible, setIsMobileChipsVisible] = useState(true)
 
+  const editorRootRef = useRef<HTMLDivElement>(null)
+  const editorHeaderRef = useRef<HTMLElement>(null)
+  const mobileChipsVisibleRef = useRef(true)
+  const scrollTrackerRef = useRef({
+    lastTop: 0,
+    downDistance: 0,
+    upDistance: 0,
+    rafId: 0,
+  })
   const jsonInputRef = useRef<HTMLInputElement>(null)
   const linkedInInputRef = useRef<HTMLInputElement>(null)
   const headerButtonBase =
-    'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1'
+    'shrink-0 inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[11px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1 sm:text-xs'
+
+  useEffect(() => {
+    mobileChipsVisibleRef.current = isMobileChipsVisible
+  }, [isMobileChipsVisible])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mediaQuery = window.matchMedia(MOBILE_LAYOUT_QUERY)
+
+    const updateLayoutMode = (matches: boolean) => {
+      setIsMobileLayout(matches)
+      if (matches) {
+        setActiveMobileSection((current) => current ?? DEFAULT_MOBILE_SECTION)
+      }
+    }
+
+    updateLayoutMode(mediaQuery.matches)
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      updateLayoutMode(event.matches)
+    }
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleChange)
+      return () => mediaQuery.removeEventListener('change', handleChange)
+    }
+
+    mediaQuery.addListener(handleChange)
+    return () => mediaQuery.removeListener(handleChange)
+  }, [])
+
+  useEffect(() => {
+    if (!isMobileLayout) {
+      mobileChipsVisibleRef.current = true
+      setIsMobileChipsVisible(true)
+      return
+    }
+
+    const rootElement = editorRootRef.current
+    if (!rootElement) return
+
+    const findScrollableAncestor = (element: HTMLElement): HTMLElement | Window => {
+      let parent: HTMLElement | null = element.parentElement
+      while (parent) {
+        const style = window.getComputedStyle(parent)
+        const overflowY = style.overflowY
+        const canScroll = /(auto|scroll|overlay)/.test(overflowY)
+        if (canScroll && parent.scrollHeight > parent.clientHeight + 1) {
+          return parent
+        }
+        parent = parent.parentElement
+      }
+      return window
+    }
+
+    const scrollContainer = findScrollableAncestor(rootElement)
+
+    const readScrollTop = () => {
+      if (scrollContainer === window) {
+        return window.scrollY || document.documentElement.scrollTop || 0
+      }
+      return (scrollContainer as HTMLElement).scrollTop
+    }
+
+    const tracker = scrollTrackerRef.current
+    tracker.lastTop = readScrollTop()
+    tracker.downDistance = 0
+    tracker.upDistance = 0
+
+    const setChipsVisibility = (visible: boolean) => {
+      if (mobileChipsVisibleRef.current === visible) return
+      mobileChipsVisibleRef.current = visible
+      setIsMobileChipsVisible(visible)
+    }
+
+    const evaluateScroll = () => {
+      tracker.rafId = 0
+      const currentScrollTop = readScrollTop()
+      const delta = currentScrollTop - tracker.lastTop
+      tracker.lastTop = currentScrollTop
+
+      if (currentScrollTop <= 24) {
+        tracker.downDistance = 0
+        tracker.upDistance = 0
+        setChipsVisibility(true)
+        return
+      }
+
+      if (Math.abs(delta) < 1) return
+
+      if (delta > 0) {
+        tracker.downDistance += delta
+        tracker.upDistance = 0
+        if (tracker.downDistance >= 18) {
+          setChipsVisibility(false)
+          tracker.downDistance = 0
+        }
+        return
+      }
+
+      tracker.upDistance += -delta
+      tracker.downDistance = 0
+      if (tracker.upDistance >= 12) {
+        setChipsVisibility(true)
+        tracker.upDistance = 0
+      }
+    }
+
+    const handleScroll = () => {
+      if (tracker.rafId !== 0) return
+      tracker.rafId = window.requestAnimationFrame(evaluateScroll)
+    }
+
+    if (scrollContainer === window) {
+      window.addEventListener('scroll', handleScroll, { passive: true })
+      return () => {
+        window.removeEventListener('scroll', handleScroll)
+        if (tracker.rafId !== 0) {
+          window.cancelAnimationFrame(tracker.rafId)
+          tracker.rafId = 0
+        }
+      }
+    }
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll)
+      if (tracker.rafId !== 0) {
+        window.cancelAnimationFrame(tracker.rafId)
+        tracker.rafId = 0
+      }
+    }
+  }, [isMobileLayout])
+
+  useEffect(() => {
+    if (!isMobileLayout) {
+      setMobileChipTopOffset(56)
+      return
+    }
+
+    const headerElement = editorHeaderRef.current
+    if (!headerElement) return
+
+    const updateOffset = () => {
+      setMobileChipTopOffset(headerElement.getBoundingClientRect().height)
+    }
+
+    updateOffset()
+
+    let observer: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(updateOffset)
+      observer.observe(headerElement)
+    }
+
+    window.addEventListener('resize', updateOffset)
+
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', updateOffset)
+    }
+  }, [isMobileLayout])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handlePreviewFocusSection = (event: Event) => {
+      const customEvent = event as CustomEvent<PreviewFocusSectionDetail>
+      const targetSection = customEvent.detail?.section
+      if (!targetSection) return
+
+      openMobileSection(targetSection, true)
+    }
+
+    window.addEventListener(
+      PREVIEW_FOCUS_SECTION_EVENT,
+      handlePreviewFocusSection as EventListener,
+    )
+    return () =>
+      window.removeEventListener(
+        PREVIEW_FOCUS_SECTION_EVENT,
+        handlePreviewFocusSection as EventListener,
+      )
+  }, [])
 
   const hasPersonalInfo = Object.values(cvData.personalInfo).some(
     (value) => typeof value === 'string' && value.trim().length > 0,
@@ -114,6 +345,8 @@ export function Editor() {
     cvData.certifications.length > 0 ||
     cvData.portfolio.length > 0 ||
     hasPreferences
+  const cvLanguage = cvData.localization.cvLanguage
+  const languageOverrides = cvData.localization.sectionTitleOverrides[cvLanguage] ?? {}
 
   const downloadJson = (filename?: string) => {
     const data = exportData()
@@ -151,8 +384,8 @@ export function Editor() {
         const data = JSON.parse(json)
         importData(data)
         setShowOpenFile(false)
-      } catch (error) {
-        alert('Failed to import data. Please check the file format.')
+      } catch {
+        alert(t('editor.alerts.jsonImportFailed'))
       }
     }
     reader.readAsText(file)
@@ -176,6 +409,86 @@ export function Editor() {
 
   const handleCollapseAll = () => {
     setCollapseSignal((prev) => prev + 1)
+    setActiveMobileSection(null)
+  }
+
+  const scrollToSection = (section: EditorSectionId, focusField = false) => {
+    requestAnimationFrame(() => {
+      const selector = `[data-editor-section="${section}"]`
+      const sectionElement = document.querySelector<HTMLElement>(selector)
+      if (!sectionElement) return
+
+      sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+      if (!focusField) return
+      window.setTimeout(() => {
+        const focusableField = sectionElement.querySelector<
+          HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        >(
+          'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])',
+        )
+        focusableField?.focus({ preventScroll: true })
+      }, 180)
+    })
+  }
+
+  const openMobileSection = (section: EditorSectionId, focusField = false) => {
+    mobileChipsVisibleRef.current = true
+    setIsMobileChipsVisible(true)
+    setActiveMobileSection(section)
+    scrollToSection(section, focusField)
+  }
+
+  const toggleMobileSection = (section: EditorSectionId) => {
+    setActiveMobileSection((current) => (current === section ? null : section))
+  }
+
+  const resolveEditorSectionTitle = (section: EditorSectionId) =>
+    getEditorSectionTitle(cvLanguage, section, languageOverrides)
+
+  const sectionHasPreviewHeading = (section: EditorSectionId) =>
+    section !== 'professionalStatement'
+
+  const resolveDefaultPreviewSectionTitle = (section: EditorSectionId) =>
+    getPreviewSectionTitle(cvLanguage, section)
+
+  const renderSectionTitleOverride = (section: EditorSectionId) => {
+    if (!sectionHasPreviewHeading(section)) return null
+
+    const currentOverride = languageOverrides[section] ?? ''
+    const hasOverride = currentOverride.trim().length > 0
+
+    return (
+      <details className="mb-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+        <summary className="cursor-pointer text-xs font-semibold text-slate-600">
+          {getEditorControlText(cvLanguage, 'customizeHeading')}
+        </summary>
+        <div className="mt-2">
+          <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            {getEditorControlText(cvLanguage, 'customHeadingLabel')}
+          </label>
+          <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+            <input
+              value={currentOverride}
+              onChange={(event) => setSectionTitleOverride(section, event.target.value)}
+              placeholder={resolveDefaultPreviewSectionTitle(section)}
+              className="h-8 w-full rounded-md border border-slate-200 bg-white px-2.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            />
+            <button
+              type="button"
+              onClick={() => clearSectionTitleOverride(section)}
+              disabled={!hasOverride}
+              className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {getEditorControlText(cvLanguage, 'resetHeading')}
+            </button>
+          </div>
+          <p className="mt-1 text-[11px] text-slate-400">
+            {getEditorControlText(cvLanguage, 'customHeadingPlaceholder')}
+          </p>
+        </div>
+      </details>
+    )
   }
 
   const importLinkedInFiles = async (files: FileList) => {
@@ -210,13 +523,14 @@ export function Editor() {
         languages: cvData.languages,
         other: cvData.other,
         preferences: cvData.preferences,
+        localization: cvData.localization,
       }
 
       importData(mergedData)
       setShowLinkedIn(false)
-      alert('LinkedIn data imported successfully!')
-    } catch (error) {
-      alert('Failed to import LinkedIn data. Please make sure you selected the correct CSV files.')
+      alert(t('editor.alerts.linkedInImportSuccess'))
+    } catch {
+      alert(t('editor.alerts.linkedInImportFailed'))
     }
   }
 
@@ -237,15 +551,16 @@ export function Editor() {
   }
 
   return (
-    <div className="editor-root">
+    <div className="editor-root" ref={editorRootRef}>
       <Modal
         open={showNewCv}
-        title="Start a new CV?"
-        subtitle="This clears the current editor and preview."
+        title={t('editor.modals.newCv.title')}
+        subtitle={t('editor.modals.newCv.subtitle')}
         onClose={() => setShowNewCv(false)}
+        closeAriaLabel={t('editor.modals.closeAria')}
       >
         <div className="space-y-4 text-sm text-gray-600">
-          <p>Your current CV will be replaced. You can download a backup first if you want to keep it.</p>
+          <p>{t('editor.modals.newCv.body')}</p>
           {hasContent ? (
             <button
               onClick={() => downloadJson()}
@@ -260,10 +575,10 @@ export function Editor() {
                   d="M12 3v10m0 0l-4-4m4 4l4-4M5 21h14"
                 />
               </svg>
-              Download current CV
+              {t('editor.modals.newCv.downloadCurrent')}
             </button>
           ) : (
-            <p className="text-xs text-gray-400">No content yet, nothing to back up.</p>
+            <p className="text-xs text-gray-400">{t('editor.modals.newCv.noContent')}</p>
           )}
         </div>
 
@@ -273,28 +588,31 @@ export function Editor() {
             className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
             type="button"
           >
-            Cancel
+            {t('common.actions.cancel')}
           </button>
           <button
             onClick={handleConfirmNewCv}
             className="rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700"
             type="button"
           >
-            Start new
+            {t('editor.modals.newCv.startNew')}
           </button>
         </div>
       </Modal>
 
       <Modal
         open={showSave}
-        title="Save your CV"
-        subtitle="Download a JSON backup you can reopen later."
+        title={t('editor.modals.saveCv.title')}
+        subtitle={t('editor.modals.saveCv.subtitle')}
         onClose={() => setShowSave(false)}
+        closeAriaLabel={t('editor.modals.closeAria')}
       >
         <div className="space-y-4 text-sm text-gray-600">
-          <p>Keep this file safe. You can open it again from “Open file”.</p>
+          <p>{t('editor.modals.saveCv.body')}</p>
           <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-gray-400">Filename</label>
+            <label className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+              {t('editor.modals.saveCv.filename')}
+            </label>
             <input
               value={saveFileName}
               onChange={(event) => setSaveFileName(event.target.value)}
@@ -312,21 +630,22 @@ export function Editor() {
                 strokeLinejoin="round"
                 strokeWidth={1.5}
                 d="M12 3v10m0 0l-4-4m4 4l4-4M5 21h14"
-              />
-            </svg>
-            Download JSON
+                />
+              </svg>
+            {t('editor.modals.saveCv.downloadJson')}
           </button>
         </div>
       </Modal>
 
       <Modal
         open={showOpenFile}
-        title="Open a CV file"
-        subtitle="Import a JSON backup to continue editing."
+        title={t('editor.modals.openCv.title')}
+        subtitle={t('editor.modals.openCv.subtitle')}
         onClose={() => setShowOpenFile(false)}
+        closeAriaLabel={t('editor.modals.closeAria')}
       >
         <div className="space-y-4 text-sm text-gray-600">
-          <p>Opening a file replaces your current CV. Download a backup first if you want to keep it.</p>
+          <p>{t('editor.modals.openCv.body')}</p>
           {hasContent ? (
             <button
               onClick={() => downloadJson()}
@@ -341,7 +660,7 @@ export function Editor() {
                   d="M12 3v10m0 0l-4-4m4 4l4-4M5 21h14"
                 />
               </svg>
-              Download current CV
+              {t('editor.modals.newCv.downloadCurrent')}
             </button>
           ) : null}
           <div
@@ -360,7 +679,7 @@ export function Editor() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16V8m0 0l-3 3m3-3l3 3" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v3h16v-3" />
             </svg>
-            <span>Drop a JSON file here or click to browse.</span>
+            <span>{t('editor.modals.openCv.dropZone')}</span>
             <input
               ref={jsonInputRef}
               type="file"
@@ -374,35 +693,35 @@ export function Editor() {
 
       <Modal
         open={showLinkedIn}
-        title="Import from LinkedIn"
-        subtitle="Use LinkedIn CSV exports to prefill your CV faster."
+        title={t('editor.modals.linkedInImport.title')}
+        subtitle={t('editor.modals.linkedInImport.subtitle')}
         onClose={() => setShowLinkedIn(false)}
+        closeAriaLabel={t('editor.modals.closeAria')}
       >
         <div className="space-y-4 text-sm text-gray-600">
           <div className="rounded-md bg-slate-50 p-3 text-xs text-slate-600">
-            <p className="font-semibold text-slate-700">How to export from LinkedIn</p>
+            <p className="font-semibold text-slate-700">{t('editor.modals.linkedInImport.howToTitle')}</p>
             <ol className="mt-2 list-inside list-decimal space-y-1">
-              <li>Go to LinkedIn Settings & Privacy</li>
-              <li>Open “Data privacy” → “Get a copy of your data”</li>
-              <li>Select the data you want and download</li>
-              <li>Extract the ZIP file and upload the CSVs here</li>
+              <li>{t('editor.modals.linkedInImport.step1')}</li>
+              <li>{t('editor.modals.linkedInImport.step2')}</li>
+              <li>{t('editor.modals.linkedInImport.step3')}</li>
+              <li>{t('editor.modals.linkedInImport.step4')}</li>
             </ol>
           </div>
 
           <div className="rounded-md bg-white p-3 text-xs text-slate-600">
-            <p className="font-semibold text-slate-700">Supported CSV files</p>
+            <p className="font-semibold text-slate-700">{t('editor.modals.linkedInImport.supportedTitle')}</p>
             <ul className="mt-2 space-y-1">
-              <li>Profile.csv (name, headline, summary)</li>
-              <li>Positions.csv (work experience)</li>
-              <li>Education.csv (education history)</li>
-              <li>Skills.csv (competencies)</li>
-              <li>Courses.csv (courses / certifications)</li>
+              <li>{t('editor.modals.linkedInImport.file1')}</li>
+              <li>{t('editor.modals.linkedInImport.file2')}</li>
+              <li>{t('editor.modals.linkedInImport.file3')}</li>
+              <li>{t('editor.modals.linkedInImport.file4')}</li>
+              <li>{t('editor.modals.linkedInImport.file5')}</li>
             </ul>
           </div>
 
           <p className="text-xs text-slate-500">
-            You can upload one or many files. Imported sections replace the matching section in your CV,
-            other sections stay untouched. Importing can overwrite existing data in those sections.
+            {t('editor.modals.linkedInImport.note')}
           </p>
 
           <div
@@ -421,7 +740,7 @@ export function Editor() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16V8m0 0l-3 3m3-3l3 3" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v3h16v-3" />
             </svg>
-            <span>Drop LinkedIn CSV files here or click to browse.</span>
+            <span>{t('editor.modals.linkedInImport.dropZone')}</span>
             <input
               ref={linkedInInputRef}
               type="file"
@@ -436,9 +755,10 @@ export function Editor() {
 
       <Modal
         open={showFaq}
-        title="FAQ"
-        subtitle="Answers to common questions."
+        title={t('editor.modals.faq.title')}
+        subtitle={t('editor.modals.faq.subtitle')}
         onClose={() => setShowFaq(false)}
+        closeAriaLabel={t('editor.modals.closeAria')}
       >
         <div className="max-h-[60vh] overflow-y-auto pr-2">
           <FaqSection />
@@ -449,31 +769,32 @@ export function Editor() {
             className="rounded-md bg-gray-900 px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800"
             type="button"
           >
-            Close
+            {t('common.actions.close')}
           </button>
         </div>
       </Modal>
 
       <Modal
         open={showAbout}
-        title="About fixacv"
-        subtitle="Free CV builder with local-first data."
+        title={t('editor.modals.about.title')}
+        subtitle={t('editor.modals.about.subtitle')}
         onClose={() => setShowAbout(false)}
+        closeAriaLabel={t('editor.modals.closeAria')}
       >
         <div className="space-y-3 text-sm text-gray-600">
-          <p>Everything runs in your browser. Your data stays on your device unless you export it.</p>
-          <p>Save JSON backups so you can reopen your CV later.</p>
-          <p>Import LinkedIn CSV exports to get started faster.</p>
-          <p>Print or save to PDF when your CV is ready.</p>
+          <p>{t('editor.modals.about.line1')}</p>
+          <p>{t('editor.modals.about.line2')}</p>
+          <p>{t('editor.modals.about.line3')}</p>
+          <p>{t('editor.modals.about.line4')}</p>
           <p>
-            Open source on{' '}
+            {t('editor.modals.about.openSourcePrefix')}{' '}
             <a
               href="https://github.com/Mancherel/fixacv"
               target="_blank"
               rel="noreferrer"
               className="font-semibold text-blue-600 hover:text-blue-700"
             >
-              GitHub
+              {t('editor.modals.about.openSourceLink')}
             </a>
             .
           </p>
@@ -498,7 +819,7 @@ export function Editor() {
                   d="M16 10h2a2 2 0 012 2v1a3 3 0 01-3 3h-1"
                 />
               </svg>
-              Support me
+              {t('editor.modals.about.supportMe')}
             </a>
           </div>
         </div>
@@ -508,228 +829,341 @@ export function Editor() {
             className="rounded-md bg-gray-900 px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800"
             type="button"
           >
-            Got it
+            {t('editor.modals.about.gotIt')}
           </button>
         </div>
       </Modal>
 
-      <header className="sticky top-0 z-10 -mx-6 mb-4 border-b border-slate-200 bg-white/95 px-6 py-6 backdrop-blur">
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setShowNewCv(true)}
-            className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
-            type="button"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.6}
-                d="M7 3h7l5 5v13H7z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.6}
-                d="M14 3v6h6"
-              />
-            </svg>
-            New CV
-          </button>
-          <button
-            onClick={openSaveModal}
-            className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
-            type="button"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.6}
-                d="M5 5h11l3 3v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.6}
-                d="M9 5v4h6V5M9 15h6"
-              />
-            </svg>
-            Save
-          </button>
-          <button
-            onClick={() => setShowOpenFile(true)}
-            className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
-            type="button"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.6}
-                d="M3 7h6l2 2h10v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.6}
-                d="M12 14V8m0 0l-3 3m3-3l3 3"
-              />
-            </svg>
-            Open file
-          </button>
-          <button
-            onClick={() => setShowLinkedIn(true)}
-            className={`${headerButtonBase} border border-[#0A66C2] bg-[#0A66C2] text-white hover:bg-[#084c95]`}
-            type="button"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.6}
-                d="M10 13a4 4 0 0 1 0-6l2-2a4 4 0 1 1 6 6l-1 1"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.6}
-                d="M14 11a4 4 0 0 1 0 6l-2 2a4 4 0 1 1-6-6l1-1"
-              />
-            </svg>
-            Import from LinkedIn
-          </button>
-          <button
-            onClick={() => setShowAbout(true)}
-            className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
-            type="button"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.6}
-                d="M12 16v-4m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            About
-          </button>
-          <button
-            onClick={() => setShowFaq(true)}
-            className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
-            type="button"
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.6}
-                d="M12 18h.01M9 9a3 3 0 016 0c0 2-3 2-3 4"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.6}
-                d="M12 22a10 10 0 100-20 10 10 0 000 20z"
-              />
-            </svg>
-            FAQ
-          </button>
-          {/* Collapse all is intentionally hidden for now; keep signal for future placement. */}
-          <button
-            onClick={handleCollapseAll}
-            className="hidden"
-            type="button"
-          />
+      <header
+        ref={editorHeaderRef}
+        className="sticky top-0 z-10 -mx-4 mb-0 border-b border-slate-200 bg-white/95 px-0 py-1.5 backdrop-blur lg:-mx-6 lg:mb-3 lg:px-6 lg:py-3"
+      >
+        <div className="overflow-x-auto no-scrollbar lg:overflow-visible">
+          <div className="flex w-max min-w-full items-center gap-1.5 pl-3 pr-3 lg:w-full lg:min-w-0 lg:flex-wrap lg:gap-2 lg:pl-0 lg:pr-0">
+            <button
+              onClick={() => setShowNewCv(true)}
+              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              type="button"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M7 3h7l5 5v13H7z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M14 3v6h6"
+                />
+              </svg>
+              {t('editor.headerButtons.newCv')}
+            </button>
+            <button
+              onClick={openSaveModal}
+              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              type="button"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M5 5h11l3 3v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M9 5v4h6V5M9 15h6"
+                />
+              </svg>
+              {t('editor.headerButtons.save')}
+            </button>
+            <button
+              onClick={() => setShowOpenFile(true)}
+              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              type="button"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M3 7h6l2 2h10v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M12 14V8m0 0l-3 3m3-3l3 3"
+                />
+              </svg>
+              {t('editor.headerButtons.openFile')}
+            </button>
+            <button
+              onClick={() => setShowLinkedIn(true)}
+              className={`${headerButtonBase} border border-[#0A66C2] bg-[#0A66C2] text-white hover:bg-[#084c95]`}
+              type="button"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M10 13a4 4 0 0 1 0-6l2-2a4 4 0 1 1 6 6l-1 1"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M14 11a4 4 0 0 1 0 6l-2 2a4 4 0 1 1-6-6l1-1"
+                />
+              </svg>
+              {t('editor.headerButtons.importLinkedIn')}
+            </button>
+            <button
+              onClick={() => setShowAbout(true)}
+              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              type="button"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M12 16v-4m0-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              {t('editor.headerButtons.about')}
+            </button>
+            <button
+              onClick={() => setShowFaq(true)}
+              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              type="button"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M12 18h.01M9 9a3 3 0 016 0c0 2-3 2-3 4"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M12 22a10 10 0 100-20 10 10 0 000 20z"
+                />
+              </svg>
+              {t('editor.headerButtons.faq')}
+            </button>
+            <div className="flex h-8 shrink-0 items-stretch overflow-hidden rounded-md border border-slate-300 bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200">
+              <label className="flex items-center border-r border-slate-300 bg-slate-50 px-3 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                {getEditorControlText(cvLanguage, 'cvLanguageLabel')}
+              </label>
+              <div className="relative flex h-full items-center">
+                <select
+                  value={cvLanguage}
+                  onChange={(event) => setCVLanguage(event.target.value as AppLanguage)}
+                  className="editor-language-select h-full w-[7.5rem] appearance-none border-0 bg-white pl-3 pr-10 text-sm font-semibold leading-none text-slate-700 focus:outline-none"
+                >
+                  {SUPPORTED_LANGUAGES.map((languageOption) => (
+                    <option key={languageOption} value={languageOption}>
+                      {getLanguageDisplayName(cvLanguage, languageOption)}
+                    </option>
+                  ))}
+                </select>
+                <svg
+                  className="pointer-events-none absolute right-2 h-4 w-4 text-slate-600"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m6 8 4 4 4-4" />
+                </svg>
+              </div>
+            </div>
+            {/* Collapse all is intentionally hidden for now; keep signal for future placement. */}
+            <button
+              onClick={handleCollapseAll}
+              className="hidden"
+              type="button"
+            />
+          </div>
         </div>
       </header>
 
+      {isMobileLayout ? (
+        <div
+          className={`sticky z-[5] -mx-4 mb-3 border-b border-slate-300 bg-blue-50/90 px-0 py-1 backdrop-blur will-change-transform transition-transform duration-500 ease-out ${
+            isMobileChipsVisible
+              ? 'translate-y-0'
+              : 'pointer-events-none -translate-y-[120%]'
+          }`}
+          style={{ top: `${mobileChipTopOffset}px` }}
+        >
+          <div className="overflow-x-auto no-scrollbar">
+            <div className="flex w-max min-w-full items-center gap-2 pl-3 pr-3">
+              {SECTION_ORDER.map((section) => (
+                <button
+                  key={section}
+                  type="button"
+                  onClick={() => openMobileSection(section)}
+                  className={`inline-flex h-8 shrink-0 items-center rounded-full border px-3 text-xs font-semibold leading-none ${
+                    activeMobileSection === section
+                      ? 'border-blue-200 bg-blue-100 text-blue-700'
+                      : 'border-slate-300 bg-white text-slate-700'
+                  }`}
+                >
+                  {resolveEditorSectionTitle(section)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="space-y-4">
-        <Section title="Personal Information" collapseSignal={collapseSignal}>
-          <PersonalInfoForm />
-        </Section>
+        <div data-editor-section="personalInfo">
+          <Section
+            title={resolveEditorSectionTitle('personalInfo')}
+            collapseSignal={collapseSignal}
+            isOpen={isMobileLayout ? activeMobileSection === 'personalInfo' : undefined}
+            onToggleOpen={isMobileLayout ? () => toggleMobileSection('personalInfo') : undefined}
+          >
+            {renderSectionTitleOverride('personalInfo')}
+            <PersonalInfoForm />
+          </Section>
+        </div>
 
-        <Section
-          title="Professional Statement"
-          onToggleVisibility={() => toggleSectionVisibility('professionalStatement')}
-          isVisible={cvData.sectionVisibility.professionalStatement}
-          collapseSignal={collapseSignal}
-        >
-          <ProfessionalStatementForm />
-        </Section>
+        <div data-editor-section="professionalStatement">
+          <Section
+            title={resolveEditorSectionTitle('professionalStatement')}
+            onToggleVisibility={() => toggleSectionVisibility('professionalStatement')}
+            isVisible={cvData.sectionVisibility.professionalStatement}
+            collapseSignal={collapseSignal}
+            isOpen={isMobileLayout ? activeMobileSection === 'professionalStatement' : undefined}
+            onToggleOpen={isMobileLayout ? () => toggleMobileSection('professionalStatement') : undefined}
+          >
+            {renderSectionTitleOverride('professionalStatement')}
+            <ProfessionalStatementForm />
+          </Section>
+        </div>
 
-        <Section
-          title="Work Experience"
-          onToggleVisibility={() => toggleSectionVisibility('experiences')}
-          isVisible={cvData.sectionVisibility.experiences}
-          collapseSignal={collapseSignal}
-        >
-          <ExperienceList />
-        </Section>
+        <div data-editor-section="experiences">
+          <Section
+            title={resolveEditorSectionTitle('experiences')}
+            onToggleVisibility={() => toggleSectionVisibility('experiences')}
+            isVisible={cvData.sectionVisibility.experiences}
+            collapseSignal={collapseSignal}
+            isOpen={isMobileLayout ? activeMobileSection === 'experiences' : undefined}
+            onToggleOpen={isMobileLayout ? () => toggleMobileSection('experiences') : undefined}
+          >
+            {renderSectionTitleOverride('experiences')}
+            <ExperienceList />
+          </Section>
+        </div>
 
-        <Section
-          title="Education"
-          onToggleVisibility={() => toggleSectionVisibility('education')}
-          isVisible={cvData.sectionVisibility.education}
-          collapseSignal={collapseSignal}
-        >
-          <EducationList />
-        </Section>
+        <div data-editor-section="education">
+          <Section
+            title={resolveEditorSectionTitle('education')}
+            onToggleVisibility={() => toggleSectionVisibility('education')}
+            isVisible={cvData.sectionVisibility.education}
+            collapseSignal={collapseSignal}
+            isOpen={isMobileLayout ? activeMobileSection === 'education' : undefined}
+            onToggleOpen={isMobileLayout ? () => toggleMobileSection('education') : undefined}
+          >
+            {renderSectionTitleOverride('education')}
+            <EducationList />
+          </Section>
+        </div>
 
-        <Section
-          title="Competencies"
-          onToggleVisibility={() => toggleSectionVisibility('competencies')}
-          isVisible={cvData.sectionVisibility.competencies}
-          collapseSignal={collapseSignal}
-        >
-          <CompetenciesList />
-        </Section>
+        <div data-editor-section="competencies">
+          <Section
+            title={resolveEditorSectionTitle('competencies')}
+            onToggleVisibility={() => toggleSectionVisibility('competencies')}
+            isVisible={cvData.sectionVisibility.competencies}
+            collapseSignal={collapseSignal}
+            isOpen={isMobileLayout ? activeMobileSection === 'competencies' : undefined}
+            onToggleOpen={isMobileLayout ? () => toggleMobileSection('competencies') : undefined}
+          >
+            {renderSectionTitleOverride('competencies')}
+            <CompetenciesList />
+          </Section>
+        </div>
 
-        <Section
-          title="Languages"
-          onToggleVisibility={() => toggleSectionVisibility('languages')}
-          isVisible={cvData.sectionVisibility.languages}
-          collapseSignal={collapseSignal}
-        >
-          <LanguagesForm />
-        </Section>
+        <div data-editor-section="languages">
+          <Section
+            title={resolveEditorSectionTitle('languages')}
+            onToggleVisibility={() => toggleSectionVisibility('languages')}
+            isVisible={cvData.sectionVisibility.languages}
+            collapseSignal={collapseSignal}
+            isOpen={isMobileLayout ? activeMobileSection === 'languages' : undefined}
+            onToggleOpen={isMobileLayout ? () => toggleMobileSection('languages') : undefined}
+          >
+            {renderSectionTitleOverride('languages')}
+            <LanguagesForm />
+          </Section>
+        </div>
 
-        <Section
-          title="Other"
-          onToggleVisibility={() => toggleSectionVisibility('other')}
-          isVisible={cvData.sectionVisibility.other}
-          collapseSignal={collapseSignal}
-        >
-          <OtherForm />
-        </Section>
+        <div data-editor-section="other">
+          <Section
+            title={resolveEditorSectionTitle('other')}
+            onToggleVisibility={() => toggleSectionVisibility('other')}
+            isVisible={cvData.sectionVisibility.other}
+            collapseSignal={collapseSignal}
+            isOpen={isMobileLayout ? activeMobileSection === 'other' : undefined}
+            onToggleOpen={isMobileLayout ? () => toggleMobileSection('other') : undefined}
+          >
+            {renderSectionTitleOverride('other')}
+            <OtherForm />
+          </Section>
+        </div>
 
-        <Section
-          title="Courses / Certifications"
-          onToggleVisibility={() => toggleSectionVisibility('certifications')}
-          isVisible={cvData.sectionVisibility.certifications}
-          collapseSignal={collapseSignal}
-        >
-          <CertificationsForm />
-        </Section>
+        <div data-editor-section="certifications">
+          <Section
+            title={resolveEditorSectionTitle('certifications')}
+            onToggleVisibility={() => toggleSectionVisibility('certifications')}
+            isVisible={cvData.sectionVisibility.certifications}
+            collapseSignal={collapseSignal}
+            isOpen={isMobileLayout ? activeMobileSection === 'certifications' : undefined}
+            onToggleOpen={isMobileLayout ? () => toggleMobileSection('certifications') : undefined}
+          >
+            {renderSectionTitleOverride('certifications')}
+            <CertificationsForm />
+          </Section>
+        </div>
 
-        <Section
-          title="Portfolio"
-          onToggleVisibility={() => toggleSectionVisibility('portfolio')}
-          isVisible={cvData.sectionVisibility.portfolio}
-          collapseSignal={collapseSignal}
-        >
-          <PortfolioForm />
-        </Section>
+        <div data-editor-section="portfolio">
+          <Section
+            title={resolveEditorSectionTitle('portfolio')}
+            onToggleVisibility={() => toggleSectionVisibility('portfolio')}
+            isVisible={cvData.sectionVisibility.portfolio}
+            collapseSignal={collapseSignal}
+            isOpen={isMobileLayout ? activeMobileSection === 'portfolio' : undefined}
+            onToggleOpen={isMobileLayout ? () => toggleMobileSection('portfolio') : undefined}
+          >
+            {renderSectionTitleOverride('portfolio')}
+            <PortfolioForm />
+          </Section>
+        </div>
 
-        <Section
-          title="Preferences"
-          onToggleVisibility={() => toggleSectionVisibility('preferences')}
-          isVisible={cvData.sectionVisibility.preferences}
-          collapseSignal={collapseSignal}
-        >
-          <PreferencesForm />
-        </Section>
-
+        <div data-editor-section="preferences">
+          <Section
+            title={resolveEditorSectionTitle('preferences')}
+            onToggleVisibility={() => toggleSectionVisibility('preferences')}
+            isVisible={cvData.sectionVisibility.preferences}
+            collapseSignal={collapseSignal}
+            isOpen={isMobileLayout ? activeMobileSection === 'preferences' : undefined}
+            onToggleOpen={isMobileLayout ? () => toggleMobileSection('preferences') : undefined}
+          >
+            {renderSectionTitleOverride('preferences')}
+            <PreferencesForm />
+          </Section>
+        </div>
       </div>
     </div>
   )

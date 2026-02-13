@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useI18n } from '../i18n/useI18n'
 
 interface PhotoCropModalProps {
   source: File | string
@@ -14,6 +15,7 @@ function clamp(value: number, min: number, max: number) {
 }
 
 export function PhotoCropModal({ source, onCancel, onSave }: PhotoCropModalProps) {
+  const { t } = useI18n()
   const [imageSrc, setImageSrc] = useState<string | null>(null)
   const [imgSize, setImgSize] = useState({ width: 0, height: 0 })
   const [baseScale, setBaseScale] = useState(1)
@@ -147,8 +149,8 @@ export function PhotoCropModal({ source, onCancel, onSave }: PhotoCropModalProps
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-xl rounded-lg bg-white p-6 shadow-xl">
-        <h2 className="text-lg font-bold text-gray-900">Crop Photo</h2>
-        <p className="mt-1 text-sm text-gray-600">Drag to reposition and zoom to crop.</p>
+        <h2 className="text-lg font-bold text-gray-900">{t('forms.photoCrop.title')}</h2>
+        <p className="mt-1 text-sm text-gray-600">{t('forms.photoCrop.subtitle')}</p>
 
         <div className="mt-4 flex justify-center">
           <div
@@ -162,7 +164,7 @@ export function PhotoCropModal({ source, onCancel, onSave }: PhotoCropModalProps
               <img
                 ref={imgRef}
                 src={imageSrc}
-                alt="Crop"
+                alt={t('forms.photoCrop.cropAlt')}
                 onLoad={handleImageLoad}
                 className="absolute left-0 top-0 select-none max-w-none max-h-none"
                 style={{
@@ -183,7 +185,7 @@ export function PhotoCropModal({ source, onCancel, onSave }: PhotoCropModalProps
         </div>
 
         <div className="mt-4">
-          <label className="block text-xs font-medium text-gray-600">Zoom</label>
+          <label className="block text-xs font-medium text-gray-600">{t('forms.photoCrop.zoom')}</label>
           <input
             type="range"
             min="1"
@@ -200,13 +202,13 @@ export function PhotoCropModal({ source, onCancel, onSave }: PhotoCropModalProps
             onClick={onCancel}
             className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            Cancel
+            {t('common.actions.cancel')}
           </button>
           <button
             onClick={handleSave}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            Save Photo
+            {t('forms.photoCrop.savePhoto')}
           </button>
         </div>
       </div>

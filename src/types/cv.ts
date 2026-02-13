@@ -66,6 +66,27 @@ export interface PreferenceField {
   visible: boolean
 }
 
+export type AppLanguage = 'en' | 'sv'
+
+export type CVSectionId =
+  | 'personalInfo'
+  | 'professionalStatement'
+  | 'experiences'
+  | 'education'
+  | 'competencies'
+  | 'languages'
+  | 'other'
+  | 'certifications'
+  | 'portfolio'
+  | 'preferences'
+
+export type SectionTitleOverrides = Partial<Record<CVSectionId, string>>
+
+export interface CVLocalization {
+  cvLanguage: AppLanguage
+  sectionTitleOverrides: Record<AppLanguage, SectionTitleOverrides>
+}
+
 export interface CVData {
   personalInfo: PersonalInfo
   personalInfoVisibility: {
@@ -103,6 +124,7 @@ export interface CVData {
     portfolio: boolean
     preferences: boolean
   }
+  localization: CVLocalization
 }
 
 // Helper type for creating new items

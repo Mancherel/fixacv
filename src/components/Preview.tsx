@@ -1,7 +1,19 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useCVData } from '../context/CVContext'
 import { formatDateRangeWithDuration } from '../utils/dateUtils'
-import type { Education, Experience, ProficiencyLevel } from '../types'
+import { useI18n } from '../i18n/useI18n'
+import type { AppLanguage, Education, Experience, ProficiencyLevel } from '../types'
+import {
+  getCompetencyLevelText,
+  getPreferenceLabelText,
+  getPreviewEmptyStateText,
+  getPreviewSectionTitle,
+} from '../i18n'
+import {
+  PREVIEW_FOCUS_SECTION_EVENT,
+  type EditorSectionId,
+  type PreviewFocusSectionDetail,
+} from '../types/editorNavigation'
 
 const PAGE_HEIGHT_MM = 297
 const PAGE_MARGIN_MM = 15
@@ -36,12 +48,12 @@ type SidebarBlock =
   | { id: string; type: 'preferences-title' }
   | { id: string; type: 'preference-item'; name: string }
 
-const hasExperienceContent = (exp: Experience) => {
+const hasExperienceContent = (exp: Experience, language: AppLanguage) => {
   if (exp.company?.trim()) return true
   if (exp.title?.trim()) return true
   if (exp.description?.trim()) return true
   if (exp.tags?.some((tag) => tag.visible && tag.name.trim())) return true
-  return Boolean(formatDateRangeWithDuration(exp.startDate, exp.endDate))
+  return Boolean(formatDateRangeWithDuration(exp.startDate, exp.endDate, language))
 }
 
 const hasEducationContent = (edu: Education) => {
@@ -55,6 +67,7 @@ const hasEducationContent = (edu: Education) => {
 
 function buildBlocks(cvData: ReturnType<typeof useCVData>['cvData']): MainBlock[] {
   const blocks: MainBlock[] = [{ id: 'header', type: 'header' }]
+  const language = cvData.localization.cvLanguage
 
   if (cvData.sectionVisibility.professionalStatement && cvData.professionalStatement) {
     blocks.push({ id: 'statement', type: 'statement' })
@@ -62,7 +75,7 @@ function buildBlocks(cvData: ReturnType<typeof useCVData>['cvData']): MainBlock[
 
   const visibleExperiences = cvData.experiences
     .filter((exp) => exp.visible)
-    .filter(hasExperienceContent)
+    .filter((exp) => hasExperienceContent(exp, language))
   if (cvData.sectionVisibility.experiences && visibleExperiences.length > 0) {
     blocks.push({ id: 'experience-title', type: 'experience-title' })
     visibleExperiences.forEach((exp) => {
@@ -89,7 +102,12 @@ function buildBlocks(cvData: ReturnType<typeof useCVData>['cvData']): MainBlock[
 
 function buildSidebarBlocks(
   cvData: ReturnType<typeof useCVData>['cvData'],
-  competencyRows: Record<ProficiencyLevel, string[][]>
+  competencyRows: Record<ProficiencyLevel, string[][]>,
+  preferenceLabels: {
+    workMode: string
+    availability: string
+    location: string
+  },
 ): SidebarBlock[] {
   const blocks: SidebarBlock[] = []
 
@@ -193,11 +211,11 @@ function buildSidebarBlocks(
   }
 
   const preferenceItems = [
-    { id: 'workmode', label: 'Work mode', field: cvData.preferences.workMode },
-    { id: 'availability', label: 'Availability', field: cvData.preferences.availability },
+    { id: 'workmode', label: preferenceLabels.workMode, field: cvData.preferences.workMode },
+    { id: 'availability', label: preferenceLabels.availability, field: cvData.preferences.availability },
     {
       id: 'location',
-      label: 'Location',
+      label: preferenceLabels.location,
       field: cvData.preferences.locationPreference,
     },
   ].filter((item) => item.field.visible && item.field.value)
@@ -294,6 +312,12 @@ function rowsEqual(
       return row.every((name, idx) => name === otherRow[idx])
     })
   })
+}
+
+function focusEditorSection(section: EditorSectionId) {
+  if (typeof window === 'undefined') return
+  const detail: PreviewFocusSectionDetail = { section }
+  window.dispatchEvent(new CustomEvent(PREVIEW_FOCUS_SECTION_EVENT, { detail }))
 }
 
 function paginateBlocks(
@@ -561,6 +585,8 @@ function paginateSidebarBlocks(
 
 export function Preview() {
   const { cvData } = useCVData()
+  const cvLanguage = cvData.localization.cvLanguage
+  const sectionTitleOverrides = cvData.localization.sectionTitleOverrides[cvLanguage] ?? {}
   const blocks = useMemo(() => buildBlocks(cvData), [cvData])
   const [pages, setPages] = useState<MainBlock[][]>([])
   const [sidebarPages, setSidebarPages] = useState<SidebarBlock[][]>([])
@@ -569,12 +595,25 @@ export function Preview() {
     advanced: [],
     proficient: [],
   })
+  const preferenceLabels = useMemo(
+    () => ({
+      workMode: getPreferenceLabelText(cvLanguage, 'workMode'),
+      availability: getPreferenceLabelText(cvLanguage, 'availability'),
+      location: getPreferenceLabelText(cvLanguage, 'location'),
+    }),
+    [cvLanguage],
+  )
   const sidebarBlocks = useMemo(
-    () => buildSidebarBlocks(cvData, competencyRows),
-    [cvData, competencyRows]
+    () => buildSidebarBlocks(cvData, competencyRows, preferenceLabels),
+    [cvData, competencyRows, preferenceLabels]
   )
   const measureRef = useRef<HTMLDivElement>(null)
   const pxPerMmRef = useRef<number | null>(null)
+  const resolvePreviewSectionTitle = (section: EditorSectionId) =>
+    getPreviewSectionTitle(cvLanguage, section, sectionTitleOverrides)
+  const resolveCompetencyLevelTitle = (level: ProficiencyLevel) =>
+    getCompetencyLevelText(cvLanguage, level)
+  const emptyPreviewText = getPreviewEmptyStateText(cvLanguage)
 
   useLayoutEffect(() => {
     if (!measureRef.current) return
@@ -627,14 +666,32 @@ export function Preview() {
   const sidePages = sidebarPages.length > 0 ? sidebarPages : [sidebarBlocks]
   const pageCount = Math.max(mainPages.length, sidePages.length)
 
+  const handlePreviewClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = (event.target as HTMLElement).closest<HTMLElement>(
+      '[data-editor-section-target]',
+    )
+    if (!target) return
+    const section = target.dataset.editorSectionTarget as EditorSectionId | undefined
+    if (!section) return
+    focusEditorSection(section)
+  }
+
   return (
-    <div className="preview-pages">
+    <div className="preview-pages" onClick={handlePreviewClick}>
       {Array.from({ length: pageCount }).map((_, pageIndex) => (
         <div key={pageIndex} className="preview-page relative">
           <div className="preview-page-inner">
             <div className="flex h-full">
-              <Sidebar blocks={sidePages[pageIndex] || []} />
-              <MainContent blocks={mainPages[pageIndex] || []} />
+              <Sidebar
+                blocks={sidePages[pageIndex] || []}
+                resolveSectionTitle={resolvePreviewSectionTitle}
+                resolveCompetencyLevelTitle={resolveCompetencyLevelTitle}
+              />
+              <MainContent
+                blocks={mainPages[pageIndex] || []}
+                resolveSectionTitle={resolvePreviewSectionTitle}
+                emptyStateText={emptyPreviewText}
+              />
             </div>
           </div>
           <div className="absolute bottom-3 right-4 text-[10px] text-gray-400">
@@ -654,11 +711,21 @@ export function Preview() {
             <div className="flex h-full">
               <div className="cv-sidebar cv-sidebar-bleed w-[30%] border-r border-gray-200 bg-gray-50/70">
                 <div className="space-y-4" data-sidebar-content>
-                  {sidebarBlocks.map(renderSidebarBlock)}
+                  {sidebarBlocks.map((block) =>
+                    renderSidebarBlock(
+                      block,
+                      resolvePreviewSectionTitle,
+                      resolveCompetencyLevelTitle,
+                    ),
+                  )}
                 </div>
               </div>
               <div className="w-[70%] px-6 text-[10.5px] text-gray-700">
-                <div className="space-y-4">{blocks.map(renderBlock)}</div>
+                <div className="space-y-4">
+                  {blocks.map((block) =>
+                    renderBlock(block, resolvePreviewSectionTitle, emptyPreviewText),
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -668,31 +735,57 @@ export function Preview() {
   )
 }
 
-function Sidebar({ blocks }: { blocks: SidebarBlock[] }) {
+function Sidebar({
+  blocks,
+  resolveSectionTitle,
+  resolveCompetencyLevelTitle,
+}: {
+  blocks: SidebarBlock[]
+  resolveSectionTitle: (section: EditorSectionId) => string
+  resolveCompetencyLevelTitle: (level: ProficiencyLevel) => string
+}) {
   return (
     <div className="cv-sidebar cv-sidebar-bleed w-[30%] border-r border-gray-200 bg-gray-50/70">
-      <div className="space-y-4">{blocks.map(renderSidebarBlock)}</div>
+      <div className="space-y-4">
+        {blocks.map((block) =>
+          renderSidebarBlock(block, resolveSectionTitle, resolveCompetencyLevelTitle),
+        )}
+      </div>
     </div>
   )
 }
 
-function MainContent({ blocks }: { blocks: MainBlock[] }) {
+function MainContent({
+  blocks,
+  resolveSectionTitle,
+  emptyStateText,
+}: {
+  blocks: MainBlock[]
+  resolveSectionTitle: (section: EditorSectionId) => string
+  emptyStateText: string
+}) {
   return (
     <div className="w-[70%] px-6 text-[10.5px] text-gray-700">
-      <div className="space-y-4">{blocks.map(renderBlock)}</div>
+      <div className="space-y-4">
+        {blocks.map((block) => renderBlock(block, resolveSectionTitle, emptyStateText))}
+      </div>
     </div>
   )
 }
 
-function renderSidebarBlock(block: SidebarBlock) {
+function renderSidebarBlock(
+  block: SidebarBlock,
+  resolveSectionTitle: (section: EditorSectionId) => string,
+  resolveCompetencyLevelTitle: (level: ProficiencyLevel) => string,
+) {
   switch (block.type) {
     case 'photo':
       return <SidebarPhoto key={block.id} block={block} />
     case 'contact-title':
       return (
-        <div key={block.id} data-block-id={block.id}>
+        <div key={block.id} data-block-id={block.id} data-editor-section-target="personalInfo">
           <h2 className="mb-2 border-b border-gray-200 pb-1 text-[11px] font-semibold uppercase leading-tight tracking-[0.14em] text-gray-700">
-            Contact
+            {resolveSectionTitle('personalInfo')}
           </h2>
         </div>
       )
@@ -700,21 +793,17 @@ function renderSidebarBlock(block: SidebarBlock) {
       return <SidebarContactItem key={block.id} block={block} />
     case 'competencies-title':
       return (
-        <div key={block.id} data-block-id={block.id}>
+        <div key={block.id} data-block-id={block.id} data-editor-section-target="competencies">
           <h2 className="mb-2 border-b border-gray-200 pb-1 text-[11px] font-semibold uppercase leading-tight tracking-[0.14em] text-gray-700">
-            Competencies
+            {resolveSectionTitle('competencies')}
           </h2>
         </div>
       )
     case 'competency-level-title':
       return (
-        <div key={block.id} data-block-id={block.id}>
+        <div key={block.id} data-block-id={block.id} data-editor-section-target="competencies">
           <h3 className="mb-1 text-xs font-semibold text-gray-900">
-            {block.level === 'expert'
-              ? 'Expert'
-              : block.level === 'advanced'
-                ? 'Advanced'
-                : 'Proficient'}
+            {resolveCompetencyLevelTitle(block.level)}
           </h3>
         </div>
       )
@@ -722,9 +811,9 @@ function renderSidebarBlock(block: SidebarBlock) {
       return <SidebarCompetencyRow key={block.id} block={block} />
     case 'languages-title':
       return (
-        <div key={block.id} data-block-id={block.id}>
+        <div key={block.id} data-block-id={block.id} data-editor-section-target="languages">
           <h2 className="mb-2 border-b border-gray-200 pb-1 text-[11px] font-semibold uppercase leading-tight tracking-[0.14em] text-gray-700">
-            Languages
+            {resolveSectionTitle('languages')}
           </h2>
         </div>
       )
@@ -732,9 +821,9 @@ function renderSidebarBlock(block: SidebarBlock) {
       return <SidebarSimpleItem key={block.id} block={block} />
     case 'other-title':
       return (
-        <div key={block.id} data-block-id={block.id}>
+        <div key={block.id} data-block-id={block.id} data-editor-section-target="other">
           <h2 className="mb-2 border-b border-gray-200 pb-1 text-[11px] font-semibold uppercase leading-tight tracking-[0.14em] text-gray-700">
-            Other
+            {resolveSectionTitle('other')}
           </h2>
         </div>
       )
@@ -742,9 +831,9 @@ function renderSidebarBlock(block: SidebarBlock) {
       return <SidebarSimpleItem key={block.id} block={block} />
     case 'certifications-title':
       return (
-        <div key={block.id} data-block-id={block.id}>
+        <div key={block.id} data-block-id={block.id} data-editor-section-target="certifications">
           <h2 className="mb-2 border-b border-gray-200 pb-1 text-[11px] font-semibold uppercase leading-tight tracking-[0.14em] text-gray-700">
-            Courses / Certifications
+            {resolveSectionTitle('certifications')}
           </h2>
         </div>
       )
@@ -752,9 +841,9 @@ function renderSidebarBlock(block: SidebarBlock) {
       return <SidebarSimpleItem key={block.id} block={block} />
     case 'portfolio-title':
       return (
-        <div key={block.id} data-block-id={block.id}>
+        <div key={block.id} data-block-id={block.id} data-editor-section-target="portfolio">
           <h2 className="mb-2 border-b border-gray-200 pb-1 text-[11px] font-semibold uppercase leading-tight tracking-[0.14em] text-gray-700">
-            Portfolio
+            {resolveSectionTitle('portfolio')}
           </h2>
         </div>
       )
@@ -762,9 +851,9 @@ function renderSidebarBlock(block: SidebarBlock) {
       return <SidebarSimpleItem key={block.id} block={block} />
     case 'preferences-title':
       return (
-        <div key={block.id} data-block-id={block.id}>
+        <div key={block.id} data-block-id={block.id} data-editor-section-target="preferences">
           <h2 className="mb-2 border-b border-gray-200 pb-1 text-[11px] font-semibold uppercase leading-tight tracking-[0.14em] text-gray-700">
-            Preferences
+            {resolveSectionTitle('preferences')}
           </h2>
         </div>
       )
@@ -777,12 +866,17 @@ function renderSidebarBlock(block: SidebarBlock) {
 
 function SidebarPhoto({ block }: { block: Extract<SidebarBlock, { type: 'photo' }> }) {
   const { cvData } = useCVData()
+  const { t } = useI18n()
   if (!cvData.personalInfo.photo || !cvData.personalInfoVisibility.photo) return null
   return (
-    <div data-block-id={block.id} className="flex justify-center">
+    <div
+      data-block-id={block.id}
+      data-editor-section-target="personalInfo"
+      className="flex justify-center"
+    >
       <img
         src={cvData.personalInfo.photo}
-        alt={cvData.personalInfo.name || 'Profile photo'}
+        alt={cvData.personalInfo.name || t('forms.personalInfo.profileAlt')}
         className="h-20 w-20 rounded-full object-cover ring-2 ring-white shadow-sm"
       />
     </div>
@@ -855,6 +949,7 @@ function SidebarContactItem({
   return (
     <div
       data-block-id={block.id}
+      data-editor-section-target="personalInfo"
       className="-mt-0.5 flex items-center gap-2 text-[10.5px] text-gray-700"
     >
       <span className="text-gray-400">{icon}</span>
@@ -869,7 +964,11 @@ function SidebarCompetencyRow({
   block: Extract<SidebarBlock, { type: 'competency-row' }>
 }) {
   return (
-    <div data-block-id={block.id} className="-mt-2 flex flex-nowrap gap-1.5">
+    <div
+      data-block-id={block.id}
+      data-editor-section-target="competencies"
+      className="-mt-2 flex flex-nowrap gap-1.5"
+    >
       {block.names.map((name, index) => (
         <span
           key={`${name}-${index}`}
@@ -890,14 +989,33 @@ function SidebarSimpleItem({
     { type: 'language-item' | 'other-item' | 'certification-item' | 'portfolio-item' | 'preference-item' }
   >
 }) {
+  const sectionTarget =
+    block.type === 'language-item'
+      ? 'languages'
+      : block.type === 'other-item'
+        ? 'other'
+        : block.type === 'certification-item'
+          ? 'certifications'
+          : block.type === 'portfolio-item'
+            ? 'portfolio'
+            : 'preferences'
+
   return (
-    <div data-block-id={block.id} className="-mt-1 flex items-start text-[10.5px] text-gray-700">
+    <div
+      data-block-id={block.id}
+      data-editor-section-target={sectionTarget}
+      className="-mt-1 flex items-start text-[10.5px] text-gray-700"
+    >
       <span>{block.name}</span>
     </div>
   )
 }
 
-function renderBlock(block: MainBlock) {
+function renderBlock(
+  block: MainBlock,
+  resolveSectionTitle: (section: EditorSectionId) => string,
+  emptyStateText: string,
+) {
   switch (block.type) {
     case 'header':
       return <HeaderBlock key={block.id} />
@@ -905,9 +1023,9 @@ function renderBlock(block: MainBlock) {
       return <StatementBlock key={block.id} />
     case 'experience-title':
       return (
-        <div key={block.id} data-block-id={block.id}>
+        <div key={block.id} data-block-id={block.id} data-editor-section-target="experiences">
           <h2 className="mb-2 border-b border-gray-200 pb-1 text-[11px] font-semibold uppercase leading-tight tracking-[0.14em] text-gray-700">
-            Experience
+            {resolveSectionTitle('experiences')}
           </h2>
         </div>
       )
@@ -915,9 +1033,9 @@ function renderBlock(block: MainBlock) {
       return <ExperienceBlock key={block.id} block={block} />
     case 'education-title':
       return (
-        <div key={block.id} data-block-id={block.id}>
+        <div key={block.id} data-block-id={block.id} data-editor-section-target="education">
           <h2 className="mb-2 border-b border-gray-200 pb-1 text-[11px] font-semibold uppercase leading-tight tracking-[0.14em] text-gray-700">
-            Education
+            {resolveSectionTitle('education')}
           </h2>
         </div>
       )
@@ -927,7 +1045,7 @@ function renderBlock(block: MainBlock) {
       return (
         <div key={block.id} data-block-id={block.id}>
           <div className="py-12 text-center text-sm text-gray-400">
-            Start filling in your information to see your CV preview
+            {emptyStateText}
           </div>
         </div>
       )
@@ -945,11 +1063,11 @@ function HeaderBlock() {
     cvData.personalInfoVisibility.professionalTitle && personalInfo.professionalTitle
 
   if (!showName && !showTitle) {
-    return <div data-block-id="header" />
+    return <div data-block-id="header" data-editor-section-target="personalInfo" />
   }
 
   return (
-    <div data-block-id="header">
+    <div data-block-id="header" data-editor-section-target="personalInfo">
       <div className="border-b border-gray-300 pb-2">
         {showName && <h1 className="text-[22px] font-semibold text-gray-900">{showName}</h1>}
         {showTitle && (
@@ -967,7 +1085,7 @@ function StatementBlock() {
   if (!cvData.professionalStatement) return null
 
   return (
-    <div data-block-id="statement">
+    <div data-block-id="statement" data-editor-section-target="professionalStatement">
       <p className="text-[10.5px] leading-snug text-gray-700">
         {cvData.professionalStatement}
       </p>
@@ -980,8 +1098,14 @@ function ExperienceBlock({
 }: {
   block: Extract<MainBlock, { type: 'experience-item' }>
 }) {
+  const { cvData } = useCVData()
+  const { t } = useI18n()
   const exp = block.item
-  const dateText = formatDateRangeWithDuration(exp.startDate, exp.endDate)
+  const dateText = formatDateRangeWithDuration(
+    exp.startDate,
+    exp.endDate,
+    cvData.localization.cvLanguage,
+  )
   const showCompany = exp.company?.trim()
   const showTitle = exp.title?.trim()
   const showDescription = exp.description?.trim()
@@ -989,15 +1113,16 @@ function ExperienceBlock({
   const hasDetails = Boolean(showCompany || showTitle || showDescription || visibleTags.length || dateText)
   const typeLabel =
     exp.type === 'assignment'
-      ? 'Assignment'
+      ? t('forms.experience.typeAssignment')
       : exp.type === 'employment'
-        ? 'Employment'
+        ? t('forms.experience.typeEmployment')
         : exp.type === 'custom'
-          ? exp.customType?.trim() || 'Custom'
+          ? exp.customType?.trim() || t('forms.experience.typeCustom')
           : ''
   return (
     <div
       data-block-id={block.id}
+      data-editor-section-target="experiences"
       className="page-break-inside-avoid border-b border-gray-100 pb-2 last:border-b-0 last:pb-0"
     >
       {typeLabel && hasDetails && (
@@ -1058,6 +1183,7 @@ function EducationBlock({
   return (
     <div
       data-block-id={block.id}
+      data-editor-section-target="education"
       className="page-break-inside-avoid border-b border-gray-100 pb-2 last:border-b-0 last:pb-0"
     >
       {(showInstitution || yearRange) && (

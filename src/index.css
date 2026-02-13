@@ -6,11 +6,43 @@
   gap: 24px;
 }
 
+.preview-scaled {
+  --preview-scale: 1;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.preview-pages [data-editor-section-target] {
+  cursor: pointer;
+}
+
 .preview-page {
   width: 210mm;
   height: 297mm;
   background: #ffffff;
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+@media (max-width: 1023px) {
+  .preview-scaled .preview-pages {
+    zoom: var(--preview-scale);
+  }
+}
+
+@supports not (zoom: 1) {
+  @media (max-width: 1023px) {
+    .preview-scaled .preview-pages {
+      transform: scale(var(--preview-scale));
+      transform-origin: top center;
+    }
+  }
 }
 
 .preview-page-inner {
@@ -66,35 +98,11 @@
 
 .kofi-attention {
   position: relative;
-  overflow: hidden;
   background: linear-gradient(135deg, #ffda6b 0%, #fbbf24 50%, #f6ad2b 75%, #f79a2e 100%);
   border-color: #f6ad2b;
   color: #3b2f1a;
   box-shadow: none;
   transition: transform 280ms ease;
-}
-
-.kofi-attention::before {
-  content: '';
-  position: absolute;
-  inset: -50% -70%;
-  background: linear-gradient(120deg, transparent 25%, rgba(255, 255, 255, 0.75) 45%, transparent 70%);
-  transform: translateX(-120%);
-  opacity: 0.7;
-  animation: kofiGlare 5s ease-in-out infinite;
-  pointer-events: none;
-}
-
-/* Glow removed per request */
-
-.kofi-attention .kofi-glare-secondary {
-  position: absolute;
-  inset: -60% -80%;
-  background: linear-gradient(120deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 75%);
-  transform: translateX(-140%);
-  opacity: 0.55;
-  animation: kofiGlareSecondary 6.5s ease-in-out infinite;
-  pointer-events: none;
 }
 
 .kofi-flip {
@@ -195,26 +203,6 @@
   }
 }
 
-@keyframes kofiGlare {
-  0%,
-  50% {
-    transform: translateX(-140%);
-  }
-  100% {
-    transform: translateX(140%);
-  }
-}
-
-@keyframes kofiGlareSecondary {
-  0%,
-  60% {
-    transform: translateX(-150%);
-  }
-  100% {
-    transform: translateX(150%);
-  }
-}
-
 @keyframes kofiBounceX {
   0% {
     transform: scaleX(0.98);
@@ -239,6 +227,13 @@
   line-height: 1.25rem;
   border-color: #cbd5e1;
   background-color: #ffffff;
+}
+
+.editor-root .editor-language-select {
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1;
+  border-color: transparent;
 }
 
 @media print {

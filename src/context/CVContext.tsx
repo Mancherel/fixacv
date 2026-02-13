@@ -1,11 +1,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import type {
+  AppLanguage,
   CVData,
+  CVSectionId,
   Experience,
   Education,
   Competency,
   ListItem,
   PreferenceField,
+  SectionTitleOverrides,
 } from '../types'
 import { storage } from '../utils/storage'
 import { getDefaultCVData } from '../utils/defaults'
@@ -32,6 +35,9 @@ interface CVContextType {
   updatePortfolio: (portfolio: ListItem[]) => void
   updatePreferences: (preferences: CVData['preferences']) => void
   toggleSectionVisibility: (section: keyof CVData['sectionVisibility']) => void
+  setCVLanguage: (language: AppLanguage) => void
+  setSectionTitleOverride: (section: CVSectionId, title: string) => void
+  clearSectionTitleOverride: (section: CVSectionId) => void
   clearAllData: () => void
   importData: (data: CVData) => void
   exportData: () => CVData
@@ -75,6 +81,38 @@ const normalizePreferencesField = (
     value: field?.value ?? '',
     visible: field?.visible ?? true,
   }
+}
+
+const SECTION_IDS: CVSectionId[] = [
+  'personalInfo',
+  'professionalStatement',
+  'experiences',
+  'education',
+  'competencies',
+  'languages',
+  'other',
+  'certifications',
+  'portfolio',
+  'preferences',
+]
+
+const normalizeSectionTitleOverrides = (
+  overrides?: SectionTitleOverrides
+): SectionTitleOverrides => {
+  const normalized: SectionTitleOverrides = {}
+  SECTION_IDS.forEach((section) => {
+    const value = overrides?.[section]
+    if (typeof value !== 'string') return
+    const trimmed = value.trim()
+    if (trimmed.length > 0) {
+      normalized[section] = value
+    }
+  })
+  return normalized
+}
+
+const normalizeCVLanguage = (language: unknown): AppLanguage => {
+  return language === 'sv' ? 'sv' : 'en'
 }
 
 const normalizeExperience = (exp: Experience): Experience => ({
@@ -123,6 +161,13 @@ function normalizeCVData(data: Partial<CVData> | null): CVData {
       workMode: normalizePreferencesField(data.preferences?.workMode),
       availability: normalizePreferencesField(data.preferences?.availability),
       locationPreference: normalizePreferencesField(data.preferences?.locationPreference),
+    },
+    localization: {
+      cvLanguage: normalizeCVLanguage(data.localization?.cvLanguage),
+      sectionTitleOverrides: {
+        en: normalizeSectionTitleOverrides(data.localization?.sectionTitleOverrides?.en),
+        sv: normalizeSectionTitleOverrides(data.localization?.sectionTitleOverrides?.sv),
+      },
     },
   }
 }
@@ -316,6 +361,62 @@ export function CVProvider({ children }: { children: ReactNode }) {
     }))
   }
 
+  const setCVLanguage = (language: AppLanguage) => {
+    setCVData((prev) => ({
+      ...prev,
+      localization: {
+        ...prev.localization,
+        cvLanguage: language,
+      },
+    }))
+  }
+
+  const setSectionTitleOverride = (section: CVSectionId, title: string) => {
+    setCVData((prev) => {
+      const language = prev.localization.cvLanguage
+      const currentOverrides = { ...prev.localization.sectionTitleOverrides[language] }
+      const trimmed = title.trim()
+
+      if (trimmed.length === 0) {
+        delete currentOverrides[section]
+      } else {
+        currentOverrides[section] = title
+      }
+
+      return {
+        ...prev,
+        localization: {
+          ...prev.localization,
+          sectionTitleOverrides: {
+            ...prev.localization.sectionTitleOverrides,
+            [language]: currentOverrides,
+          },
+        },
+      }
+    })
+  }
+
+  const clearSectionTitleOverride = (section: CVSectionId) => {
+    setCVData((prev) => {
+      const language = prev.localization.cvLanguage
+      const currentOverrides = { ...prev.localization.sectionTitleOverrides[language] }
+      if (!(section in currentOverrides)) {
+        return prev
+      }
+      delete currentOverrides[section]
+      return {
+        ...prev,
+        localization: {
+          ...prev.localization,
+          sectionTitleOverrides: {
+            ...prev.localization.sectionTitleOverrides,
+            [language]: currentOverrides,
+          },
+        },
+      }
+    })
+  }
+
   const clearAllData = () => {
     const defaultData = getDefaultCVData()
     setCVData(defaultData)
@@ -354,6 +455,9 @@ export function CVProvider({ children }: { children: ReactNode }) {
         updatePortfolio,
         updatePreferences,
         toggleSectionVisibility,
+        setCVLanguage,
+        setSectionTitleOverride,
+        clearSectionTitleOverride,
         clearAllData,
         importData,
         exportData,

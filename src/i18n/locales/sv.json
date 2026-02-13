@@ -1,0 +1,315 @@
+{
+  "languages": {
+    "en": "Engelska",
+    "sv": "Svenska"
+  },
+  "editor": {
+    "sectionTitles": {
+      "personalInfo": "Personuppgifter",
+      "professionalStatement": "Professionell sammanfattning",
+      "experiences": "Arbetslivserfarenhet",
+      "education": "Utbildning",
+      "competencies": "Kompetenser",
+      "languages": "Språk",
+      "other": "Övrigt",
+      "certifications": "Kurser / Certifieringar",
+      "portfolio": "Portfolio",
+      "preferences": "Preferenser"
+    },
+    "controls": {
+      "cvLanguageLabel": "CV-språk",
+      "customizeHeading": "Anpassa rubrik",
+      "customHeadingLabel": "Egen rubrik",
+      "customHeadingPlaceholder": "Lämna tomt för standardöversättning",
+      "resetHeading": "Återställ"
+    }
+  },
+  "preview": {
+    "sectionTitles": {
+      "personalInfo": "Kontakt",
+      "professionalStatement": "Professionell sammanfattning",
+      "experiences": "Arbetslivserfarenhet",
+      "education": "Utbildning",
+      "competencies": "Kompetenser",
+      "languages": "Språk",
+      "other": "Övrigt",
+      "certifications": "Kurser / Certifieringar",
+      "portfolio": "Portfolio",
+      "preferences": "Preferenser"
+    },
+    "competencyLevels": {
+      "expert": "Expert",
+      "advanced": "Avancerad",
+      "proficient": "God"
+    },
+    "preferenceLabels": {
+      "workMode": "Arbetssätt",
+      "availability": "Tillgänglighet",
+      "location": "Plats"
+    },
+    "emptyState": "Börja fylla i dina uppgifter för att se din CV-förhandsvisning"
+  },
+  "ui": {
+    "common": {
+      "actions": {
+        "add": "Lägg till",
+        "update": "Uppdatera",
+        "cancel": "Avbryt",
+        "close": "Stäng",
+        "save": "Spara",
+        "delete": "Ta bort",
+        "edit": "Redigera",
+        "remove": "Ta bort"
+      },
+      "visibility": {
+        "hideFromCv": "Dölj i CV",
+        "showInCv": "Visa i CV",
+        "visible": "Synlig",
+        "hidden": "Dold"
+      },
+      "status": {
+        "ongoing": "Pågående"
+      },
+      "meta": {
+        "characters": "{{count}} tecken"
+      }
+    },
+    "layout": {
+      "resizeEditorWidth": "Ändra editorbredd",
+      "resizeEditorHeight": "Ändra editorhöjd"
+    },
+    "header": {
+      "tagline": "Gratis CV-byggare. Din data stannar hos dig.",
+      "printPdfMobile": "Skriv ut PDF",
+      "printPdfDesktop": "Skriv ut / Spara PDF",
+      "closeDialog": "Stäng"
+    },
+    "kofi": {
+      "mobilePrefix": "Bjud mig på en",
+      "desktopPrefix": "Bjud mig på",
+      "items": {
+        "tinyPlant": "liten växt",
+        "iceCream": "glass",
+        "coffee": "kaffe",
+        "donut": "munk",
+        "mango": "mango",
+        "sushi": "sushi",
+        "dimSum": "dim sum",
+        "ikeaFlatpack": "IKEA-flatpack",
+        "energyDrink": "energidryck",
+        "potato": "potatis",
+        "socks": "ett par strumpor",
+        "yarn": "garn",
+        "filamentRoll": "filamentrulle",
+        "game": "spel",
+        "taco": "taco",
+        "ramen": "ramen",
+        "beer": "öl",
+        "fullCharge": "full laddning",
+        "beardTrim": "skäggtrim"
+      }
+    },
+    "previewPanel": {
+      "zoomIn": "Zooma in",
+      "zoomOut": "Zooma ut"
+    },
+    "editor": {
+      "alerts": {
+        "jsonImportFailed": "Kunde inte importera data. Kontrollera filformatet.",
+        "linkedInImportSuccess": "LinkedIn-data importerades.",
+        "linkedInImportFailed": "Kunde inte importera LinkedIn-data. Kontrollera att du valde rätt CSV-filer."
+      },
+      "headerButtons": {
+        "newCv": "Nytt CV",
+        "save": "Spara",
+        "openFile": "Öppna fil",
+        "importLinkedIn": "Importera från LinkedIn",
+        "about": "Om",
+        "faq": "FAQ"
+      },
+      "modals": {
+        "closeAria": "Stäng",
+        "newCv": {
+          "title": "Starta ett nytt CV?",
+          "subtitle": "Detta rensar nuvarande editor och förhandsvisning.",
+          "body": "Ditt nuvarande CV ersätts. Du kan ladda ner en backup först om du vill spara det.",
+          "downloadCurrent": "Ladda ner nuvarande CV",
+          "noContent": "Inget innehåll ännu, inget att spara.",
+          "startNew": "Starta nytt"
+        },
+        "saveCv": {
+          "title": "Spara ditt CV",
+          "subtitle": "Ladda ner en JSON-backup som du kan öppna senare.",
+          "body": "Spara filen på en säker plats. Du kan öppna den igen via \"Öppna fil\".",
+          "filename": "Filnamn",
+          "downloadJson": "Ladda ner JSON"
+        },
+        "openCv": {
+          "title": "Öppna en CV-fil",
+          "subtitle": "Importera en JSON-backup för att fortsätta redigera.",
+          "body": "Att öppna en fil ersätter ditt nuvarande CV. Ladda ner en backup först om du vill spara det.",
+          "dropZone": "Släpp en JSON-fil här eller klicka för att välja."
+        },
+        "linkedInImport": {
+          "title": "Importera från LinkedIn",
+          "subtitle": "Använd LinkedIn CSV-exporter för att fylla i ditt CV snabbare.",
+          "howToTitle": "Så exporterar du från LinkedIn",
+          "step1": "Gå till LinkedIn Settings & Privacy",
+          "step2": "Öppna \"Data privacy\" -> \"Get a copy of your data\"",
+          "step3": "Välj vilken data du vill ha och ladda ner",
+          "step4": "Packa upp ZIP-filen och ladda upp CSV-filerna här",
+          "supportedTitle": "CSV-filer som stöds",
+          "file1": "Profile.csv (namn, rubrik, sammanfattning)",
+          "file2": "Positions.csv (arbetslivserfarenhet)",
+          "file3": "Education.csv (utbildningshistorik)",
+          "file4": "Skills.csv (kompetenser)",
+          "file5": "Courses.csv (kurser / certifieringar)",
+          "note": "Du kan ladda upp en eller flera filer. Importerade sektioner ersätter motsvarande sektion i ditt CV, andra sektioner bevaras. Importen kan skriva över befintlig data i dessa sektioner.",
+          "dropZone": "Släpp LinkedIn CSV-filer här eller klicka för att välja."
+        },
+        "faq": {
+          "title": "FAQ",
+          "subtitle": "Svar på vanliga frågor."
+        },
+        "about": {
+          "title": "Om fixacv",
+          "subtitle": "Gratis CV-byggare med local-first data.",
+          "line1": "Allt körs i din webbläsare. Din data stannar på din enhet om du inte exporterar den.",
+          "line2": "Spara JSON-backuper så att du kan öppna ditt CV senare.",
+          "line3": "Importera LinkedIn CSV-exporter för att komma igång snabbare.",
+          "line4": "Skriv ut eller spara till PDF när ditt CV är klart.",
+          "openSourcePrefix": "Open source på",
+          "openSourceLink": "GitHub",
+          "supportMe": "Stötta mig",
+          "gotIt": "Fattat"
+        }
+      }
+    },
+    "forms": {
+      "personalInfo": {
+        "photo": "Foto",
+        "noPhoto": "Inget foto",
+        "uploadPhoto": "Ladda upp foto",
+        "editPhoto": "Redigera",
+        "removePhoto": "Ta bort",
+        "profileAlt": "Profilfoto",
+        "name": "Namn",
+        "namePlaceholder": "Ditt fullständiga namn",
+        "professionalTitle": "Yrkestitel",
+        "professionalTitlePlaceholder": "t.ex. Senior Frontend-utvecklare",
+        "email": "E-post",
+        "emailPlaceholder": "din@email.com",
+        "phone": "Telefon",
+        "phonePlaceholder": "+46 70 123 45 67",
+        "linkedin": "LinkedIn",
+        "linkedinPlaceholder": "https://linkedin.com/in/dinprofil",
+        "website": "Webbplats",
+        "websitePlaceholder": "https://dinwebbplats.se",
+        "location": "Plats",
+        "locationPlaceholder": "Stockholm, Sverige"
+      },
+      "professionalStatement": {
+        "label": "Professionell sammanfattning",
+        "placeholder": "En kort professionell sammanfattning (2-3 meningar)...",
+        "characters": "{{count}} tecken"
+      },
+      "experience": {
+        "type": "Typ",
+        "typeAssignment": "Uppdrag",
+        "typeEmployment": "Anställning",
+        "typeCustom": "Egen",
+        "typeNone": "Ingen",
+        "customTypePlaceholder": "Egen typetikett",
+        "company": "Företag",
+        "titleRole": "Titel/Roll",
+        "startDate": "Startdatum",
+        "endDate": "Slutdatum",
+        "ongoing": "Pågående",
+        "description": "Beskrivning",
+        "tags": "Taggar",
+        "tagsPlaceholder": "t.ex. React, TypeScript",
+        "addButton": "+ Lägg till erfarenhet",
+        "confirmDelete": "Ta bort den här erfarenheten?"
+      },
+      "education": {
+        "institution": "Skola/Lärosäte",
+        "institutionPlaceholder": "Namn på lärosäte",
+        "degreeProgram": "Examen/Program",
+        "degreePlaceholder": "t.ex. Kandidat i datavetenskap",
+        "startYear": "Startår",
+        "endYear": "Slutår",
+        "description": "Beskrivning",
+        "tags": "Taggar",
+        "tagsPlaceholder": "t.ex. AI, forskning",
+        "addButton": "+ Lägg till utbildning",
+        "confirmDelete": "Ta bort den här utbildningen?"
+      },
+      "competencies": {
+        "addSkillTitle": "Lägg till kompetens",
+        "skillNamePlaceholder": "Kompetensnamn...",
+        "confirmDelete": "Ta bort den här kompetensen?",
+        "dropHere": "Släpp här",
+        "noSkillsForLevel": "Inga kompetenser på nivån {{level}}",
+        "noSkillsYet": "Inga kompetenser tillagda ännu"
+      },
+      "preferences": {
+        "workMode": "Arbetssätt",
+        "workModeFlexible": "Flexibelt",
+        "workModeRemote": "Distans",
+        "workModeHybrid": "Hybrid",
+        "workModeOnSite": "På plats",
+        "workModeHint": "Lämna som Flexibelt om du inte har någon preferens.",
+        "availability": "Tillgänglighet / uppsägningstid",
+        "availabilityPlaceholder": "t.ex. 1 månads uppsägningstid",
+        "locationPreference": "Platspreferens",
+        "locationPreferencePlaceholder": "t.ex. Stockholm med omnejd"
+      },
+      "lists": {
+        "languagesLabel": "Lägg till språk",
+        "languagesPlaceholder": "t.ex. Svenska (modersmål)",
+        "languagesEmpty": "Inga språk tillagda ännu",
+        "otherLabel": "Lägg till övrigt",
+        "otherPlaceholder": "t.ex. B-körkort",
+        "otherEmpty": "Inga övriga punkter tillagda ännu",
+        "certificationsLabel": "Lägg till certifiering / kurs",
+        "certificationsPlaceholder": "t.ex. AWS Solutions Architect (2023)",
+        "certificationsEmpty": "Inga certifieringar tillagda ännu",
+        "portfolioLabel": "Lägg till portfolio-länk",
+        "portfolioPlaceholder": "t.ex. https://dinportfolio.se/projekt",
+        "portfolioEmpty": "Inga portfolio-länkar tillagda ännu",
+        "defaultEmpty": "Inga poster tillagda ännu"
+      },
+      "photoCrop": {
+        "title": "Beskär foto",
+        "subtitle": "Dra för att flytta och zooma för att beskära.",
+        "zoom": "Zoom",
+        "savePhoto": "Spara foto",
+        "cropAlt": "Beskärning"
+      }
+    },
+    "faq": {
+      "items": {
+        "whatIs": {
+          "q": "Vad är fixacv?",
+          "a": "fixacv är en gratis, integritetsfokuserad CV-byggare. Allt körs i din webbläsare och din data stannar på din enhet."
+        },
+        "account": {
+          "q": "Behöver jag skapa konto?",
+          "a": "Nej. Ingen inloggning krävs och ingen molnlagring används. Ditt CV sparas lokalt i webbläsaren."
+        },
+        "exportPdf": {
+          "q": "Kan jag exportera till PDF?",
+          "a": "Ja. Förhandsvisningen matchar PDF-exporten och fungerar för utskrift och delning."
+        },
+        "linkedIn": {
+          "q": "Kan jag importera från LinkedIn?",
+          "a": "Ja. Du kan importera LinkedIn-CSV för att fylla i profil, erfarenhet, utbildning, kompetenser och kurser."
+        },
+        "languages": {
+          "q": "Finns stöd för svenska och engelska?",
+          "a": "Ja. Appen stödjer både svenska och engelska med fokus på en ren och professionell CV-layout."
+        }
+      }
+    }
+  }
+}
