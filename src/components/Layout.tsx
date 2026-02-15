@@ -151,16 +151,18 @@ export function Layout({ editor, preview }: LayoutProps) {
   const previewStyle = !isDesktopLayout ? { height: `${mobilePreviewHeightPct}%` } : undefined
 
   return (
-    <div className={`flex h-screen flex-col overflow-hidden bg-gray-50 print-reset ${isDragging ? 'select-none' : ''}`}>
+    <div className={`flex h-screen flex-col overflow-hidden bg-gray-50 dark:bg-gray-900 print-reset ${isDragging ? 'select-none' : ''}`}>
       <SiteHeader />
 
       <div ref={containerRef} className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-        {/* Preview Panel */}
+        {/* Preview Panel – relative wrapper so the zoom overlay can sit outside the scroll container */}
         <div
-          className="order-1 min-h-0 shrink-0 overflow-y-auto overflow-x-hidden bg-gray-100 pb-4 touch-manipulation lg:order-3 lg:flex-1 lg:pb-16 print-full print-reset"
+          className="relative order-1 min-h-0 shrink-0 lg:order-3 lg:flex-1 print-full print-reset"
           style={previewStyle}
         >
-          {preview}
+          <div className="absolute inset-0 overflow-auto bg-gray-100 dark:bg-neutral-700 pb-4 touch-manipulation lg:overflow-x-hidden lg:pb-16">
+            {preview}
+          </div>
         </div>
 
         {/* Drag Separator */}
@@ -174,10 +176,10 @@ export function Layout({ editor, preview }: LayoutProps) {
               ? t('layout.resizeEditorWidth')
               : t('layout.resizeEditorHeight')
           }
-          className={`order-2 z-10 shrink-0 bg-slate-100 touch-none print-hidden ${
+          className={`order-2 z-10 shrink-0 bg-slate-100 dark:bg-gray-700 touch-none print-hidden ${
             isDesktopLayout
-              ? 'w-3 cursor-col-resize border-x border-slate-200'
-              : 'h-4 cursor-row-resize border-y border-slate-200'
+              ? 'w-3 cursor-col-resize border-x border-slate-200 dark:border-gray-600'
+              : 'h-4 cursor-row-resize border-y border-slate-200 dark:border-gray-600'
           }`}
           onKeyDown={handleSeparatorKeyDown}
         >
@@ -192,7 +194,7 @@ export function Layout({ editor, preview }: LayoutProps) {
 
         {/* Editor Panel */}
         <div
-          className="order-3 min-h-0 flex-1 overflow-y-auto bg-slate-50 touch-pan-y print-hidden lg:order-1 lg:flex-none"
+          className="order-3 min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-gray-900 touch-pan-y print-hidden lg:order-1 lg:flex-none"
           style={editorStyle}
         >
           <div className="px-4 pb-6 pt-0 lg:px-6">{editor}</div>
