@@ -28,6 +28,7 @@ import {
   getPreviewSectionTitle,
 } from '../i18n'
 import { useI18n } from '../i18n/useI18n'
+import { useTheme } from '../hooks/useTheme'
 
 const KOFI_URL = 'https://ko-fi.com/mancherel'
 
@@ -49,16 +50,16 @@ function Modal({ open, title, subtitle, onClose, closeAriaLabel, children }: Mod
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"
+        className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-            {subtitle ? <p className="mt-1 text-sm text-gray-500">{subtitle}</p> : null}
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
+            {subtitle ? <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{subtitle}</p> : null}
           </div>
           <button
-            className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
             onClick={onClose}
             aria-label={closeAriaLabel}
             type="button"
@@ -109,6 +110,7 @@ export function Editor() {
     clearAllData,
   } = useCVData()
   const { t } = useI18n()
+  const { theme, toggleTheme } = useTheme()
   const [showNewCv, setShowNewCv] = useState(false)
   const [showSave, setShowSave] = useState(false)
   const [showOpenFile, setShowOpenFile] = useState(false)
@@ -888,13 +890,13 @@ export function Editor() {
 
       <header
         ref={editorHeaderRef}
-        className="sticky top-0 z-10 -mx-4 mb-0 border-b border-slate-200 bg-white/95 px-0 py-1.5 backdrop-blur lg:-mx-6 lg:mb-3 lg:px-6 lg:py-3"
+        className="sticky top-0 z-10 -mx-4 mb-0 border-b border-slate-200 bg-white/95 px-0 py-1.5 backdrop-blur lg:-mx-6 lg:mb-3 lg:px-6 lg:py-3 dark:border-gray-700 dark:bg-gray-800/95"
       >
         <div className="overflow-x-auto no-scrollbar lg:overflow-visible">
           <div className="flex w-max min-w-full items-center gap-1.5 pl-3 pr-3 lg:w-full lg:min-w-0 lg:flex-wrap lg:gap-2 lg:pl-0 lg:pr-0">
             <button
               onClick={() => setShowNewCv(true)}
-              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600`}
               type="button"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -915,7 +917,7 @@ export function Editor() {
             </button>
             <button
               onClick={openSaveModal}
-              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600`}
               type="button"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -936,7 +938,7 @@ export function Editor() {
             </button>
             <button
               onClick={() => setShowOpenFile(true)}
-              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600`}
               type="button"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -978,7 +980,7 @@ export function Editor() {
             </button>
             <button
               onClick={() => setShowAbout(true)}
-              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600`}
               type="button"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -993,7 +995,7 @@ export function Editor() {
             </button>
             <button
               onClick={() => setShowFaq(true)}
-              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100`}
+              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600`}
               type="button"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1012,10 +1014,34 @@ export function Editor() {
               </svg>
               {t('editor.headerButtons.faq')}
             </button>
-            <div className="flex h-8 shrink-0 items-stretch overflow-hidden rounded-md border border-slate-300 bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200">
+            <button
+              onClick={toggleTheme}
+              className={`${headerButtonBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600`}
+              type="button"
+              aria-label={theme === 'dark' ? t('header.lightMode') : t('header.darkMode')}
+            >
+              {theme === 'dark' ? (
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              ) : (
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+                </svg>
+              )}
+            </button>
+            <div className="flex h-8 shrink-0 items-stretch overflow-hidden rounded-md border border-slate-300 bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 dark:border-gray-600 dark:bg-gray-700">
               <label
                 htmlFor="cv-language-select"
-                className="flex items-center border-r border-slate-300 bg-slate-50 px-2.5 text-slate-500"
+                className="flex items-center border-r border-slate-300 bg-slate-50 px-2.5 text-slate-500 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-400"
                 aria-label={cvLanguageLabel}
               >
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1036,7 +1062,7 @@ export function Editor() {
                   value={cvLanguage}
                   onChange={(event) => setCVLanguage(event.target.value as AppLanguage)}
                   aria-label={cvLanguageLabel}
-                  className="editor-language-select h-full w-[7.5rem] appearance-none border-0 bg-white pl-3 pr-10 text-[11px] font-semibold leading-none text-slate-700 focus:outline-none sm:text-xs"
+                  className="editor-language-select h-full w-[7.5rem] appearance-none border-0 bg-white pl-3 pr-10 text-[11px] font-semibold leading-none text-slate-700 focus:outline-none sm:text-xs dark:bg-gray-700 dark:text-gray-300"
                 >
                   {SUPPORTED_LANGUAGES.map((languageOption) => (
                     <option key={languageOption} value={languageOption}>
@@ -1066,7 +1092,7 @@ export function Editor() {
 
       {isMobileLayout ? (
         <div
-          className={`sticky z-[5] -mx-4 mb-3 border-b border-slate-300 bg-blue-50/90 px-0 py-1 backdrop-blur will-change-transform transition-transform duration-500 ease-out ${
+          className={`sticky z-[5] -mx-4 mb-3 border-b border-slate-300 bg-blue-50/90 px-0 py-1 backdrop-blur will-change-transform transition-transform duration-500 ease-out dark:border-gray-600 dark:bg-gray-800/90 ${
             isMobileChipsVisible
               ? 'translate-y-0'
               : 'pointer-events-none -translate-y-[120%]'
@@ -1082,8 +1108,8 @@ export function Editor() {
                   onClick={() => openMobileSection(section)}
                   className={`inline-flex h-8 shrink-0 items-center rounded-full border px-3 text-xs font-semibold leading-none ${
                     activeMobileSection === section
-                      ? 'border-blue-200 bg-blue-100 text-blue-700'
-                      : 'border-slate-300 bg-white text-slate-700'
+                      ? 'border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                      : 'border-slate-300 bg-white text-slate-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300'
                   }`}
                 >
                   {resolveEditorSectionTitle(section)}

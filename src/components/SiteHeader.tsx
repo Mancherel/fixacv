@@ -43,7 +43,7 @@ export function SiteHeader() {
           </div>
         </div>
       )}
-      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/90 backdrop-blur print-hidden header-reveal">
+      <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/90 backdrop-blur print-hidden header-reveal dark:border-gray-700 dark:bg-gray-900">
         <div className="flex flex-col gap-2 px-4 py-2 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-2 sm:gap-2.5">
             <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm sm:h-10 sm:w-10">
@@ -66,11 +66,11 @@ export function SiteHeader() {
               </svg>
             </div>
             <div className="min-w-0 leading-none">
-              <p className="text-2xl text-gray-900 sm:text-[2rem]">
+              <p className="text-2xl text-gray-900 sm:text-[2rem] dark:text-gray-100">
                 <span className="font-semibold">fixacv</span>
                 <span className="text-amber-400">.app</span>
               </p>
-              <p className="hidden pt-0 text-xs text-slate-400 info-reveal sm:block">
+              <p className="hidden pt-0 text-xs text-slate-400 info-reveal sm:block dark:text-slate-500">
                 {t('header.tagline')}
               </p>
             </div>
@@ -83,7 +83,7 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={handlePrint}
-              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-md bg-blue-600 px-2.5 text-xs font-semibold leading-none whitespace-nowrap text-white shadow-md shadow-blue-200/60 hover:bg-blue-700 btn-lift sm:px-3.5 sm:text-sm"
+              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-md bg-blue-600 px-2.5 text-xs font-semibold leading-none whitespace-nowrap text-white shadow-md shadow-blue-200/60 hover:bg-blue-700 btn-lift sm:px-3.5 sm:text-sm dark:shadow-blue-900/40"
             >
               <svg className="h-3 w-3 sm:h-3.5 sm:w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path

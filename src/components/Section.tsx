@@ -45,7 +45,7 @@ export function Section({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <div
         className="mb-0 flex cursor-pointer items-center justify-between rounded-md px-1 py-1 transition-colors"
         role="button"
@@ -54,7 +54,7 @@ export function Section({
         onClick={handleToggle}
         onKeyDown={handleHeaderKeyDown}
       >
-        <div className="flex items-center gap-2 text-base font-semibold text-gray-900 hover:text-gray-700">
+        <div className="flex items-center gap-2 text-base font-semibold text-gray-900 hover:text-gray-700 dark:text-gray-100 dark:hover:text-gray-300">
           <svg
             className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-90' : ''}`}
             fill="none"

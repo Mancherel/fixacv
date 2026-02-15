@@ -82,7 +82,9 @@
       "tagline": "Free CV builder. Your data stays with you.",
       "printPdfMobile": "Print PDF",
       "printPdfDesktop": "Print / Save PDF",
-      "closeDialog": "Close"
+      "closeDialog": "Close",
+      "darkMode": "Dark mode",
+      "lightMode": "Light mode"
     },
     "kofi": {
       "mobilePrefix": "Buy me a",
