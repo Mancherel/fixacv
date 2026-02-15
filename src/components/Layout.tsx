@@ -154,13 +154,13 @@ export function Layout({ editor, preview }: LayoutProps) {
     <div className={`flex h-screen flex-col overflow-hidden bg-gray-50 dark:bg-gray-900 print-reset ${isDragging ? 'select-none' : ''}`}>
       <SiteHeader />
 
-      <div ref={containerRef} className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+      <div ref={containerRef} className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row print-reset">
         {/* Preview Panel – relative wrapper so the zoom overlay can sit outside the scroll container */}
         <div
-          className="relative order-1 min-h-0 shrink-0 lg:order-3 lg:flex-1 print-full print-reset"
+          className="relative order-1 min-h-0 shrink-0 lg:order-3 lg:flex-1 print-reset"
           style={previewStyle}
         >
-          <div className="absolute inset-0 overflow-auto bg-gray-100 dark:bg-neutral-700 pb-4 touch-manipulation lg:overflow-x-hidden lg:pb-16">
+          <div className="absolute inset-0 overflow-auto bg-gray-100 dark:bg-neutral-700 pb-4 touch-manipulation lg:overflow-x-hidden lg:pb-16 print-reset">
             {preview}
           </div>
         </div>

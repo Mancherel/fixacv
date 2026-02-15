@@ -320,7 +320,7 @@ export function PreviewPanel() {
           outside the scroll container so they stay fixed in place. */}
       {overlayTarget && createPortal(zoomControls, overlayTarget)}
       <div className="p-3 pb-4 lg:p-8 lg:pb-16 print-reset">
-        <div ref={pagesRef} style={{ ...wrapperStyle, marginInline: 'auto' }}>
+        <div ref={pagesRef} className="print-reset" style={{ ...wrapperStyle, marginInline: 'auto' }}>
           <Preview key={previewRenderKey} />
         </div>
       </div>
