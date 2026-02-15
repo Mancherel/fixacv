@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+  color-scheme: dark;
+}
+
+/* Ensure <html> itself has the dark background so iOS Safari
+   uses it for the status-bar tint (it reads the root element,
+   not an inner div styled with Tailwind). */
+html.dark {
+  background-color: var(--color-gray-900);
+}
+
 .preview-pages {
   display: flex;
   flex-direction: column;
@@ -30,16 +43,16 @@
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
 }
 
-.preview-scaled .preview-pages {
-  zoom: var(--preview-scale);
+.dark .preview-page {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
 }
 
-@supports not (zoom: 1) {
-  .preview-scaled .preview-pages {
-    transform: scale(var(--preview-scale));
-    transform-origin: top center;
-  }
-}
+/*
+ * Preview scaling is applied via inline styles in PreviewPanel.tsx
+ * (zoom for WebKit/Blink, transform for Firefox).
+ * Using inline styles instead of CSS var() because iOS Safari
+ * does not reliably apply zoom with CSS custom properties.
+ */
 
 .preview-page-inner {
   width: 100%;
@@ -223,6 +236,82 @@
   line-height: 1.25rem;
   border-color: #cbd5e1;
   background-color: #ffffff;
+}
+
+.dark .editor-root input:not([type='file']):not([type='checkbox']):not([type='radio']),
+.dark .editor-root textarea,
+.dark .editor-root select {
+  border-color: #4b5563;
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark .editor-root label,
+.dark .editor-root .text-gray-700 {
+  color: #d1d5db;
+}
+
+.dark .editor-root .text-gray-600 {
+  color: #9ca3af;
+}
+
+.dark .editor-root .text-gray-500,
+.dark .editor-root .text-slate-500 {
+  color: #9ca3af;
+}
+
+.dark .editor-root .text-gray-400,
+.dark .editor-root .text-slate-400 {
+  color: #6b7280;
+}
+
+.dark .editor-root .text-gray-900,
+.dark .editor-root .text-slate-900 {
+  color: #f3f4f6;
+}
+
+.dark .editor-root .text-slate-700 {
+  color: #d1d5db;
+}
+
+.dark .editor-root .text-slate-600 {
+  color: #9ca3af;
+}
+
+.dark .editor-root .border-slate-200 {
+  border-color: #4b5563;
+}
+
+.dark .editor-root .border-slate-300 {
+  border-color: #4b5563;
+}
+
+.dark .editor-root .bg-white {
+  background-color: #1f2937;
+}
+
+.dark .editor-root .bg-slate-50 {
+  background-color: #1f2937;
+}
+
+.dark .editor-root .bg-slate-100 {
+  background-color: #374151;
+}
+
+.dark .editor-root .hover\:bg-slate-100:hover {
+  background-color: #374151;
+}
+
+.dark .editor-root .hover\:bg-gray-100:hover {
+  background-color: #374151;
+}
+
+.dark .editor-root .bg-gray-50 {
+  background-color: #1f2937;
+}
+
+.dark .editor-root .bg-gray-100 {
+  background-color: #374151;
 }
 
 .editor-root .editor-language-select {
