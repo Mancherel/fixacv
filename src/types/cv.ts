@@ -125,6 +125,7 @@ export interface CVData {
     preferences: boolean
   }
   localization: CVLocalization
+  selectedTemplateId: string
 }
 
 // Helper type for creating new items

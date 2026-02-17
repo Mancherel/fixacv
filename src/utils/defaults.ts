@@ -56,4 +56,5 @@ export const getDefaultCVData = (): CVData => ({
       sv: {},
     },
   },
+  selectedTemplateId: 'classic',
 })

@@ -38,6 +38,7 @@ interface CVContextType {
   setCVLanguage: (language: AppLanguage) => void
   setSectionTitleOverride: (section: CVSectionId, title: string) => void
   clearSectionTitleOverride: (section: CVSectionId) => void
+  setSelectedTemplate: (templateId: string) => void
   clearAllData: () => void
   importData: (data: CVData) => void
   exportData: () => CVData
@@ -169,6 +170,10 @@ function normalizeCVData(data: Partial<CVData> | null): CVData {
         sv: normalizeSectionTitleOverrides(data.localization?.sectionTitleOverrides?.sv),
       },
     },
+    selectedTemplateId:
+      typeof data.selectedTemplateId === 'string' && data.selectedTemplateId.trim()
+        ? data.selectedTemplateId
+        : defaults.selectedTemplateId,
   }
 }
 
@@ -417,6 +422,10 @@ export function CVProvider({ children }: { children: ReactNode }) {
     })
   }
 
+  const setSelectedTemplate = (templateId: string) => {
+    setCVData((prev) => ({ ...prev, selectedTemplateId: templateId }))
+  }
+
   const clearAllData = () => {
     const defaultData = getDefaultCVData()
     setCVData(defaultData)
@@ -458,6 +467,7 @@ export function CVProvider({ children }: { children: ReactNode }) {
         setCVLanguage,
         setSectionTitleOverride,
         clearSectionTitleOverride,
+        setSelectedTemplate,
         clearAllData,
         importData,
         exportData,
