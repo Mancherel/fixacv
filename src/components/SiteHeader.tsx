@@ -44,7 +44,7 @@ export function SiteHeader() {
         </div>
       )}
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/90 backdrop-blur print-hidden header-reveal dark:border-gray-700 dark:bg-gray-900">
-        <div className="flex flex-col gap-2 px-4 py-2 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6">
           <div className="flex items-center gap-2 sm:gap-2.5">
             <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm sm:h-10 sm:w-10">
               <span className="logo-glow" aria-hidden="true" />
@@ -76,10 +76,8 @@ export function SiteHeader() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end">
-            <div className="min-w-0">
-              <KofiButton onClick={() => setShowKofi(true)} />
-            </div>
+          <div className="ml-auto flex items-center gap-2">
+            <KofiButton onClick={() => setShowKofi(true)} />
             <button
               type="button"
               onClick={handlePrint}
