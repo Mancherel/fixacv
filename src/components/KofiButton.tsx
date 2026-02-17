@@ -60,11 +60,10 @@ export function KofiButton({ onClick }: KofiButtonProps) {
     <button
       type="button"
       onClick={onClick}
-      className="kofi-attention kofi-jiggle relative inline-flex h-9 min-w-0 items-center justify-center gap-2 rounded-md border px-2.5 text-xs font-semibold leading-none shadow-md btn-lift sm:px-3.5 sm:text-sm"
+      className="kofi-attention kofi-jiggle relative inline-flex h-9 min-w-0 items-center justify-center gap-2 rounded-md border px-2.5 text-xs font-semibold leading-none shadow-md btn-lift sm:px-3.5 sm:text-xs"
     >
       <span className="relative z-10 flex items-center gap-1 leading-none">
-        <span>{t('kofi.desktopPrefix')}</span>
-        <span className="font-semibold">{label}</span>
+        <span className="font-semibold">{t('kofi.desktopPrefix')} {label}</span>
         {emojiSupported ? (
           <span className="ml-0.5 text-lg" aria-hidden="true">{emoji}</span>
         ) : null}

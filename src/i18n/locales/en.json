@@ -182,6 +182,8 @@
           "line4": "Print or save to PDF when your CV is ready.",
           "openSourcePrefix": "Open source on",
           "openSourceLink": "GitHub",
+          "bugsPrefix": "Found a bug? Report it on",
+          "bugsLink": "GitHub Issues",
           "supportMe": "Support me",
           "gotIt": "Got it"
         }

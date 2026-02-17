@@ -80,8 +80,8 @@
     },
     "header": {
       "tagline": "Gratis CV-byggare. Din data stannar hos dig.",
-      "printPdfMobile": "Skriv ut PDF",
-      "printPdfDesktop": "Skriv ut / Spara PDF",
+      "printPdfMobile": "Skriv ut",
+      "printPdfDesktop": "Skriv ut",
       "closeDialog": "Stäng",
       "darkMode": "Mörkt läge",
       "lightMode": "Ljust läge"
@@ -182,6 +182,8 @@
           "line4": "Skriv ut eller spara till PDF när ditt CV är klart.",
           "openSourcePrefix": "Open source på",
           "openSourceLink": "GitHub",
+          "bugsPrefix": "Hittat en bugg? Rapportera den på",
+          "bugsLink": "GitHub Issues",
           "supportMe": "Stötta mig",
           "gotIt": "Fattat"
         }

@@ -29,6 +29,7 @@ import {
 } from '../i18n'
 import { useI18n } from '../i18n/useI18n'
 import { useTheme } from '../hooks/useTheme'
+import { KofiButton } from './KofiButton'
 
 const KOFI_URL = 'https://ko-fi.com/mancherel'
 
@@ -852,29 +853,20 @@ export function Editor() {
             </a>
             .
           </p>
-          <div className="pt-2">
+          <p>
+            {t('editor.modals.about.bugsPrefix')}{' '}
             <a
-              href={KOFI_URL}
+              href="https://github.com/Mancherel/fixacv/issues"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-[#fcbf47] bg-[#fcbf47] px-4 py-2 text-xs font-semibold text-[#323842] shadow-md shadow-amber-200/60 hover:bg-[#f6b532]"
+              className="font-semibold text-blue-600 hover:text-blue-700"
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.6}
-                  d="M4 8h12v8a4 4 0 01-4 4H8a4 4 0 01-4-4V8z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.6}
-                  d="M16 10h2a2 2 0 012 2v1a3 3 0 01-3 3h-1"
-                />
-              </svg>
-              {t('editor.modals.about.supportMe')}
+              {t('editor.modals.about.bugsLink')}
             </a>
+            .
+          </p>
+          <div className="pt-2">
+            <KofiButton onClick={() => window.open(KOFI_URL, '_blank')} />
           </div>
         </div>
         <div className="mt-6 flex justify-end">
@@ -890,7 +882,7 @@ export function Editor() {
 
       <header
         ref={editorHeaderRef}
-        className="sticky top-0 z-10 -mx-4 mb-0 border-b border-slate-200 bg-white/95 px-0 py-1.5 backdrop-blur lg:-mx-6 lg:mb-3 lg:px-6 lg:py-3 dark:border-gray-700 dark:bg-gray-800/95"
+        className="sticky top-0 z-10 -mx-4 mb-0 border-b border-slate-200 bg-white/95 px-0 py-1.5 backdrop-blur lg:-mx-6 lg:mb-6 lg:px-6 lg:py-3 dark:border-gray-700 dark:bg-gray-800/95"
       >
         <div className="overflow-x-auto no-scrollbar lg:overflow-visible">
           <div className="flex w-max min-w-full items-center gap-1.5 pl-3 pr-3 lg:w-full lg:min-w-0 lg:flex-wrap lg:gap-2 lg:pl-0 lg:pr-0">
