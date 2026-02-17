@@ -1,16 +1,31 @@
 import { useState } from 'react'
 import { KofiButton } from './KofiButton'
+import { TemplateSelector } from './TemplateSelector'
 import { useI18n } from '../i18n/useI18n'
+import { useCVData } from '../context/CVContext'
+import { getTemplate } from '../cv-template/templates'
+import { generatePdf } from '../pdf/generatePdf'
 
 const KOFI_IFRAME_SRC =
   'https://ko-fi.com/mancherel/?hidefeed=true&widget=true&embed=true&preview=true'
 
 export function SiteHeader() {
   const [showKofi, setShowKofi] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const { cvData } = useCVData()
   const { t } = useI18n()
 
-  const handlePrint = () => {
-    window.print()
+  const handleExportPdf = async () => {
+    if (exporting) return
+    setExporting(true)
+    try {
+      const template = getTemplate(cvData.selectedTemplateId)
+      await generatePdf(cvData, template)
+    } catch (err) {
+      console.error('PDF export failed:', err)
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -76,31 +91,44 @@ export function SiteHeader() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end">
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:justify-end">
             <div className="min-w-0">
               <KofiButton onClick={() => setShowKofi(true)} />
             </div>
+            <TemplateSelector />
             <button
               type="button"
-              onClick={handlePrint}
-              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-md bg-blue-600 px-2.5 text-xs font-semibold leading-none whitespace-nowrap text-white shadow-md shadow-blue-200/60 hover:bg-blue-700 btn-lift sm:px-3.5 sm:text-sm dark:shadow-blue-900/40"
+              onClick={handleExportPdf}
+              disabled={exporting}
+              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-md bg-blue-600 px-2.5 text-xs font-semibold leading-none whitespace-nowrap text-white shadow-md shadow-blue-200/60 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-wait btn-lift sm:px-3.5 sm:text-sm dark:shadow-blue-900/40"
             >
-              <svg className="h-3 w-3 sm:h-3.5 sm:w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M7 8V4h10v4M6 16h12v4H6v-4z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M5 12h14a2 2 0 012 2v2H3v-2a2 2 0 012-2z"
-                />
-              </svg>
-              <span className="sm:hidden">{t('header.printPdfMobile')}</span>
-              <span className="hidden sm:inline">{t('header.printPdfDesktop')}</span>
+              {exporting ? (
+                <svg className="h-3 w-3 sm:h-3.5 sm:w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="h-3 w-3 sm:h-3.5 sm:w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M12 5v14m0 0l-6-6m6 6l6-6"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M5 19h14"
+                  />
+                </svg>
+              )}
+              <span className="sm:hidden">
+                {exporting ? t('header.exportingPdf') : t('header.exportPdfMobile')}
+              </span>
+              <span className="hidden sm:inline">
+                {exporting ? t('header.exportingPdf') : t('header.exportPdfDesktop')}
+              </span>
             </button>
           </div>
         </div>

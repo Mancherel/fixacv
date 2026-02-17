@@ -578,6 +578,7 @@ export function Editor() {
         other: cvData.other,
         preferences: cvData.preferences,
         localization: cvData.localization,
+        selectedTemplateId: cvData.selectedTemplateId,
       }
 
       importData(mergedData)

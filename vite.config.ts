@@ -1,8 +1,16 @@
+import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      // @react-pdf/pdfkit imports pako/lib/zlib/*.js — resolve to the copy
+      // inside browserify-zlib's nested node_modules so Rollup can find it.
+      pako: path.resolve(__dirname, 'node_modules/browserify-zlib/node_modules/pako'),
+    },
+  },
   plugins: [
     react(),
     VitePWA({

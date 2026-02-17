@@ -82,6 +82,9 @@
       "tagline": "Free CV builder. Your data stays with you.",
       "printPdfMobile": "Print PDF",
       "printPdfDesktop": "Print / Save PDF",
+      "exportPdfMobile": "Export PDF",
+      "exportPdfDesktop": "Export PDF",
+      "exportingPdf": "Exporting…",
       "closeDialog": "Close",
       "darkMode": "Dark mode",
       "lightMode": "Light mode"

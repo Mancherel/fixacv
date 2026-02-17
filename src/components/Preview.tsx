@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useCVData } from '../context/CVContext'
 import { formatDateRangeWithDuration } from '../utils/dateUtils'
 import { useI18n } from '../i18n/useI18n'
-import type { AppLanguage, Education, Experience, ProficiencyLevel } from '../types'
+import type { ProficiencyLevel } from '../types'
 import {
   getCompetencyLevelText,
   getPreferenceLabelText,
@@ -14,225 +14,12 @@ import {
   type EditorSectionId,
   type PreviewFocusSectionDetail,
 } from '../types/editorNavigation'
+import type { ContentBlock, MainBlock, SidebarBlock } from '../cv-template/blocks'
+import { buildMainBlocks, buildSidebarBlocks, buildContentBlocks } from '../cv-template/buildBlocks'
+import { paginateMainBlocks, paginateSidebarBlocks, paginateContentBlocks } from '../cv-template/paginateBlocks'
+import { getTemplate } from '../cv-template/templates'
+import { getVisibleContactItems } from '../cv-template/dataUtils'
 
-const PAGE_HEIGHT_MM = 297
-const PAGE_MARGIN_MM = 15
-const SIDEBAR_SAFE_BOTTOM_MM = 12
-
-type MainBlock =
-  | { id: string; type: 'header' }
-  | { id: string; type: 'statement' }
-  | { id: string; type: 'experience-title' }
-  | { id: string; type: 'experience-item'; item: Experience }
-  | { id: string; type: 'education-title' }
-  | { id: string; type: 'education-item'; item: Education }
-  | { id: string; type: 'empty' }
-
-type ContactKind = 'email' | 'phone' | 'location' | 'linkedin' | 'website'
-
-type SidebarBlock =
-  | { id: string; type: 'photo' }
-  | { id: string; type: 'contact-title' }
-  | { id: string; type: 'contact-item'; value: string; href?: string; kind: ContactKind }
-  | { id: string; type: 'competencies-title' }
-  | { id: string; type: 'competency-level-title'; level: ProficiencyLevel }
-  | { id: string; type: 'competency-row'; level: ProficiencyLevel; names: string[] }
-  | { id: string; type: 'languages-title' }
-  | { id: string; type: 'language-item'; name: string }
-  | { id: string; type: 'other-title' }
-  | { id: string; type: 'other-item'; name: string }
-  | { id: string; type: 'certifications-title' }
-  | { id: string; type: 'certification-item'; name: string }
-  | { id: string; type: 'portfolio-title' }
-  | { id: string; type: 'portfolio-item'; name: string }
-  | { id: string; type: 'preferences-title' }
-  | { id: string; type: 'preference-item'; name: string }
-
-const hasExperienceContent = (exp: Experience, language: AppLanguage) => {
-  if (exp.company?.trim()) return true
-  if (exp.title?.trim()) return true
-  if (exp.description?.trim()) return true
-  if (exp.tags?.some((tag) => tag.visible && tag.name.trim())) return true
-  return Boolean(formatDateRangeWithDuration(exp.startDate, exp.endDate, language))
-}
-
-const hasEducationContent = (edu: Education) => {
-  if (edu.institution?.trim()) return true
-  if (edu.degree?.trim()) return true
-  if (edu.description?.trim()) return true
-  if (edu.tags?.some((tag) => tag.visible && tag.name.trim())) return true
-  if (edu.startYear || edu.endYear) return true
-  return false
-}
-
-function buildBlocks(cvData: ReturnType<typeof useCVData>['cvData']): MainBlock[] {
-  const blocks: MainBlock[] = [{ id: 'header', type: 'header' }]
-  const language = cvData.localization.cvLanguage
-
-  if (cvData.sectionVisibility.professionalStatement && cvData.professionalStatement) {
-    blocks.push({ id: 'statement', type: 'statement' })
-  }
-
-  const visibleExperiences = cvData.experiences
-    .filter((exp) => exp.visible)
-    .filter((exp) => hasExperienceContent(exp, language))
-  if (cvData.sectionVisibility.experiences && visibleExperiences.length > 0) {
-    blocks.push({ id: 'experience-title', type: 'experience-title' })
-    visibleExperiences.forEach((exp) => {
-      blocks.push({ id: `experience-${exp.id}`, type: 'experience-item', item: exp })
-    })
-  }
-
-  const visibleEducation = cvData.education
-    .filter((edu) => edu.visible)
-    .filter(hasEducationContent)
-  if (cvData.sectionVisibility.education && visibleEducation.length > 0) {
-    blocks.push({ id: 'education-title', type: 'education-title' })
-    visibleEducation.forEach((edu) => {
-      blocks.push({ id: `education-${edu.id}`, type: 'education-item', item: edu })
-    })
-  }
-
-  if (blocks.length === 1) {
-    blocks.push({ id: 'empty', type: 'empty' })
-  }
-
-  return blocks
-}
-
-function buildSidebarBlocks(
-  cvData: ReturnType<typeof useCVData>['cvData'],
-  competencyRows: Record<ProficiencyLevel, string[][]>,
-  preferenceLabels: {
-    workMode: string
-    availability: string
-    location: string
-  },
-): SidebarBlock[] {
-  const blocks: SidebarBlock[] = []
-
-  if (cvData.personalInfo.photo && cvData.personalInfoVisibility.photo) {
-    blocks.push({ id: 'side-photo', type: 'photo' })
-  }
-
-  const contactItems: Array<{ value: string; kind: ContactKind }> = []
-  if (cvData.personalInfoVisibility.email && cvData.personalInfo.email) {
-    contactItems.push({ value: cvData.personalInfo.email, kind: 'email' })
-  }
-  if (cvData.personalInfoVisibility.phone && cvData.personalInfo.phone) {
-    contactItems.push({ value: cvData.personalInfo.phone, kind: 'phone' })
-  }
-  if (cvData.personalInfoVisibility.location && cvData.personalInfo.location) {
-    contactItems.push({ value: cvData.personalInfo.location, kind: 'location' })
-  }
-  if (cvData.personalInfoVisibility.linkedin && cvData.personalInfo.linkedin) {
-    contactItems.push({ value: cvData.personalInfo.linkedin, kind: 'linkedin' })
-  }
-  if (cvData.personalInfoVisibility.website && cvData.personalInfo.website) {
-    contactItems.push({ value: cvData.personalInfo.website, kind: 'website' })
-  }
-
-  if (contactItems.length > 0) {
-    blocks.push({ id: 'side-contact-title', type: 'contact-title' })
-    contactItems.forEach((item, index) => {
-      const kind: ContactKind = item.kind
-      blocks.push({
-        id: `side-contact-${index}`,
-        type: 'contact-item',
-        value: item.value,
-        href: undefined,
-        kind,
-      })
-    })
-  }
-
-  const hasCompetencies =
-    cvData.sectionVisibility.competencies &&
-    (cvData.competencies.expert.some((comp) => comp.visible && comp.name.trim()) ||
-      cvData.competencies.advanced.some((comp) => comp.visible && comp.name.trim()) ||
-      cvData.competencies.proficient.some((comp) => comp.visible && comp.name.trim()))
-
-  if (hasCompetencies) {
-    blocks.push({ id: 'side-competencies-title', type: 'competencies-title' })
-    ;(['expert', 'advanced', 'proficient'] as ProficiencyLevel[]).forEach((level) => {
-      const list = cvData.competencies[level].filter((comp) => comp.visible && comp.name.trim())
-      if (list.length === 0) return
-      blocks.push({ id: `side-competency-level-${level}`, type: 'competency-level-title', level })
-      const rows = competencyRows[level]?.length
-        ? competencyRows[level]
-        : list.map((comp) => [comp.name])
-      rows.forEach((row, index) => {
-        blocks.push({
-          id: `side-competency-row-${level}-${index}`,
-          type: 'competency-row',
-          level,
-          names: row,
-        })
-      })
-    })
-  }
-
-  const visibleLanguages = cvData.languages.filter((item) => item.visible && item.name.trim())
-  if (cvData.sectionVisibility.languages && visibleLanguages.length > 0) {
-    blocks.push({ id: 'side-languages-title', type: 'languages-title' })
-    visibleLanguages.forEach((item, index) => {
-      blocks.push({ id: `side-language-${index}`, type: 'language-item', name: item.name })
-    })
-  }
-
-  const visibleOther = cvData.other.filter((item) => item.visible && item.name.trim())
-  if (cvData.sectionVisibility.other && visibleOther.length > 0) {
-    blocks.push({ id: 'side-other-title', type: 'other-title' })
-    visibleOther.forEach((item, index) => {
-      blocks.push({ id: `side-other-${index}`, type: 'other-item', name: item.name })
-    })
-  }
-
-  const visibleCertifications = cvData.certifications.filter(
-    (item) => item.visible && item.name.trim()
-  )
-  if (cvData.sectionVisibility.certifications && visibleCertifications.length > 0) {
-    blocks.push({ id: 'side-certifications-title', type: 'certifications-title' })
-    visibleCertifications.forEach((item, index) => {
-      blocks.push({
-        id: `side-certification-${index}`,
-        type: 'certification-item',
-        name: item.name,
-      })
-    })
-  }
-
-  const visiblePortfolio = cvData.portfolio.filter((item) => item.visible && item.name.trim())
-  if (cvData.sectionVisibility.portfolio && visiblePortfolio.length > 0) {
-    blocks.push({ id: 'side-portfolio-title', type: 'portfolio-title' })
-    visiblePortfolio.forEach((item, index) => {
-      blocks.push({ id: `side-portfolio-${index}`, type: 'portfolio-item', name: item.name })
-    })
-  }
-
-  const preferenceItems = [
-    { id: 'workmode', label: preferenceLabels.workMode, field: cvData.preferences.workMode },
-    { id: 'availability', label: preferenceLabels.availability, field: cvData.preferences.availability },
-    {
-      id: 'location',
-      label: preferenceLabels.location,
-      field: cvData.preferences.locationPreference,
-    },
-  ].filter((item) => item.field.visible && item.field.value)
-
-  if (cvData.sectionVisibility.preferences && preferenceItems.length > 0) {
-    blocks.push({ id: 'side-preferences-title', type: 'preferences-title' })
-    preferenceItems.forEach((item) => {
-      blocks.push({
-        id: `side-preferences-${item.id}`,
-        type: 'preference-item',
-        name: `${item.label}: ${item.field.value}`,
-      })
-    })
-  }
-
-  return blocks
-}
 
 function getPxPerMm(): number {
   const probe = document.createElement('div')
@@ -320,274 +107,26 @@ function focusEditorSection(section: EditorSectionId) {
   window.dispatchEvent(new CustomEvent(PREVIEW_FOCUS_SECTION_EVENT, { detail }))
 }
 
-function paginateBlocks(
-  blocks: MainBlock[],
-  heights: Map<string, number>,
-  maxHeight: number
-): MainBlock[][] {
-  const pages: MainBlock[][] = []
-  let current: MainBlock[] = []
-  let used = 0
-  const seenTitles = { experience: false, education: false }
-  const titleHeights = {
-    experience: heights.get('experience-title') || 0,
-    education: heights.get('education-title') || 0,
-  }
-
-  const getSection = (block: MainBlock) => {
-    if (block.type === 'experience-item' || block.type === 'experience-title') return 'experience'
-    if (block.type === 'education-item' || block.type === 'education-title') return 'education'
-    return null
-  }
-
-  const getHeight = (block: MainBlock) => {
-    const direct = heights.get(block.id)
-    if (direct !== undefined) return direct
-    if (block.type === 'experience-title') return titleHeights.experience
-    if (block.type === 'education-title') return titleHeights.education
-    return 0
-  }
-
-  const makeRepeatedTitle = (section: 'experience' | 'education', index: number): MainBlock => ({
-    id: `${section}-title-continued-${index}`,
-    type: section === 'experience' ? 'experience-title' : 'education-title',
-  })
-
-  for (let i = 0; i < blocks.length; i += 1) {
-    const block = blocks[i]
-    const blockHeight = getHeight(block)
-    const isSectionTitle =
-      block.type === 'experience-title' || block.type === 'education-title'
-
-    if (isSectionTitle) {
-      const nextBlock = blocks[i + 1]
-      const nextHeight = nextBlock ? getHeight(nextBlock) : 0
-      if (current.length > 0 && used + blockHeight + nextHeight > maxHeight) {
-        pages.push(current)
-        current = []
-        used = 0
-      }
-    }
-
-    if (current.length > 0 && used + blockHeight > maxHeight) {
-      pages.push(current)
-      current = []
-      used = 0
-
-      const section = getSection(block)
-      if (
-        section &&
-        seenTitles[section] &&
-        titleHeights[section] > 0 &&
-        titleHeights[section] + blockHeight <= maxHeight
-      ) {
-        current.push(makeRepeatedTitle(section, pages.length))
-        used += titleHeights[section]
-      }
-    }
-
-    if (blockHeight > maxHeight && used > 0) {
-      current = []
-      used = 0
-    }
-
-    current.push(block)
-    used += blockHeight
-
-    if (blockHeight > maxHeight && current.length === 1) {
-      pages.push(current)
-      current = []
-      used = 0
-    }
-
-    if (block.type === 'experience-title') {
-      seenTitles.experience = true
-    } else if (block.type === 'education-title') {
-      seenTitles.education = true
-    }
-  }
-
-  if (current.length > 0) {
-    pages.push(current)
-  }
-
-  return pages
-}
-
-function paginateSidebarBlocks(
-  blocks: SidebarBlock[],
-  heights: Map<string, number>,
-  maxHeight: number
-): SidebarBlock[][] {
-  const pages: SidebarBlock[][] = []
-  let current: SidebarBlock[] = []
-  let used = 0
-  let seenCompetenciesTitle = false
-  let seenLanguagesTitle = false
-  let seenOtherTitle = false
-  let seenCertificationsTitle = false
-  let seenPortfolioTitle = false
-  let seenPreferencesTitle = false
-
-  const competenciesTitleHeight = heights.get('side-competencies-title') || 0
-  const languagesTitleHeight = heights.get('side-languages-title') || 0
-  const otherTitleHeight = heights.get('side-other-title') || 0
-  const certificationsTitleHeight = heights.get('side-certifications-title') || 0
-  const portfolioTitleHeight = heights.get('side-portfolio-title') || 0
-  const preferencesTitleHeight = heights.get('side-preferences-title') || 0
-  const levelTitleHeights: Record<ProficiencyLevel, number> = {
-    expert: heights.get('side-competency-level-expert') || 0,
-    advanced: heights.get('side-competency-level-advanced') || 0,
-    proficient: heights.get('side-competency-level-proficient') || 0,
-  }
-
-  const getHeight = (block: SidebarBlock) => {
-    const direct = heights.get(block.id)
-    if (direct !== undefined) return direct
-    if (block.type === 'competencies-title') return competenciesTitleHeight
-    if (block.type === 'competency-level-title') return levelTitleHeights[block.level]
-    if (block.type === 'languages-title') return languagesTitleHeight
-    if (block.type === 'other-title') return otherTitleHeight
-    if (block.type === 'certifications-title') return certificationsTitleHeight
-    if (block.type === 'portfolio-title') return portfolioTitleHeight
-    if (block.type === 'preferences-title') return preferencesTitleHeight
-    return 0
-  }
-
-  const makeRepeatedTitle = (pageIndex: number): SidebarBlock => ({
-    id: `side-competencies-title-repeat-${pageIndex}`,
-    type: 'competencies-title',
-  })
-
-  const makeRepeatedLevel = (level: ProficiencyLevel, pageIndex: number): SidebarBlock => ({
-    id: `side-competency-level-${level}-repeat-${pageIndex}`,
-    type: 'competency-level-title',
-    level,
-  })
-
-  const isSectionTitle = (block: SidebarBlock) =>
-    block.type === 'contact-title' ||
-    block.type === 'competencies-title' ||
-    block.type === 'competency-level-title' ||
-    block.type === 'languages-title' ||
-    block.type === 'other-title' ||
-    block.type === 'certifications-title' ||
-    block.type === 'portfolio-title' ||
-    block.type === 'preferences-title'
-
-  for (let i = 0; i < blocks.length; i += 1) {
-    const block = blocks[i]
-    const blockHeight = getHeight(block)
-
-    if (isSectionTitle(block)) {
-      const nextBlock = blocks[i + 1]
-      const nextHeight = nextBlock ? getHeight(nextBlock) : 0
-      if (current.length > 0 && used + blockHeight + nextHeight > maxHeight) {
-        pages.push(current)
-        current = []
-        used = 0
-      }
-    }
-
-    if (current.length > 0 && used + blockHeight > maxHeight) {
-      pages.push(current)
-      current = []
-      used = 0
-
-      if (
-        seenCompetenciesTitle &&
-        (block.type === 'competency-level-title' || block.type === 'competency-row')
-      ) {
-        const titleHeight = competenciesTitleHeight
-        if (used + titleHeight <= maxHeight) {
-          current.push(makeRepeatedTitle(pages.length))
-          used += titleHeight
-        }
-
-        if (block.type === 'competency-row') {
-          const levelHeight = levelTitleHeights[block.level]
-          if (levelHeight > 0 && used + levelHeight <= maxHeight) {
-            current.push(makeRepeatedLevel(block.level, pages.length))
-            used += levelHeight
-          }
-        }
-      }
-
-      if (seenLanguagesTitle && block.type === 'language-item') {
-        if (languagesTitleHeight > 0 && used + languagesTitleHeight <= maxHeight) {
-          current.push({ id: `side-languages-title-repeat-${pages.length}`, type: 'languages-title' })
-          used += languagesTitleHeight
-        }
-      }
-
-      if (seenOtherTitle && block.type === 'other-item') {
-        if (otherTitleHeight > 0 && used + otherTitleHeight <= maxHeight) {
-          current.push({ id: `side-other-title-repeat-${pages.length}`, type: 'other-title' })
-          used += otherTitleHeight
-        }
-      }
-
-      if (seenCertificationsTitle && block.type === 'certification-item') {
-        if (certificationsTitleHeight > 0 && used + certificationsTitleHeight <= maxHeight) {
-          current.push({
-            id: `side-certifications-title-repeat-${pages.length}`,
-            type: 'certifications-title',
-          })
-          used += certificationsTitleHeight
-        }
-      }
-
-      if (seenPortfolioTitle && block.type === 'portfolio-item') {
-        if (portfolioTitleHeight > 0 && used + portfolioTitleHeight <= maxHeight) {
-          current.push({
-            id: `side-portfolio-title-repeat-${pages.length}`,
-            type: 'portfolio-title',
-          })
-          used += portfolioTitleHeight
-        }
-      }
-
-      if (seenPreferencesTitle && block.type === 'preference-item') {
-        if (preferencesTitleHeight > 0 && used + preferencesTitleHeight <= maxHeight) {
-          current.push({
-            id: `side-preferences-title-repeat-${pages.length}`,
-            type: 'preferences-title',
-          })
-          used += preferencesTitleHeight
-        }
-      }
-    }
-
-    current.push(block)
-    used += blockHeight
-
-    if (block.type === 'competencies-title') {
-      seenCompetenciesTitle = true
-    } else if (block.type === 'languages-title') {
-      seenLanguagesTitle = true
-    } else if (block.type === 'other-title') {
-      seenOtherTitle = true
-    } else if (block.type === 'certifications-title') {
-      seenCertificationsTitle = true
-    } else if (block.type === 'portfolio-title') {
-      seenPortfolioTitle = true
-    } else if (block.type === 'preferences-title') {
-      seenPreferencesTitle = true
-    }
-  }
-
-  if (current.length > 0) {
-    pages.push(current)
-  }
-
-  return pages
-}
-
 export function Preview() {
   const { cvData } = useCVData()
+  const template = getTemplate(cvData.selectedTemplateId)
+
+  if (template.layout.mode === 'single-column') {
+    return <SingleColumnPreview />
+  }
+
+  return <TwoColumnPreview />
+}
+
+function TwoColumnPreview() {
+  const { cvData } = useCVData()
+  const template = getTemplate(cvData.selectedTemplateId)
+  const PAGE_HEIGHT_MM = template.layout.pageHeightMm
+  const PAGE_MARGIN_MM = template.tokens.spacing.pageMargin
+  const SIDEBAR_SAFE_BOTTOM_MM = template.layout.sidebarSafeBottomMm
   const cvLanguage = cvData.localization.cvLanguage
   const sectionTitleOverrides = cvData.localization.sectionTitleOverrides[cvLanguage] ?? {}
-  const blocks = useMemo(() => buildBlocks(cvData), [cvData])
+  const blocks = useMemo(() => buildMainBlocks(cvData), [cvData])
   const [pages, setPages] = useState<MainBlock[][]>([])
   const [sidebarPages, setSidebarPages] = useState<SidebarBlock[][]>([])
   const [competencyRows, setCompetencyRows] = useState<Record<ProficiencyLevel, string[][]>>({
@@ -658,7 +197,7 @@ export function Preview() {
       }
     }
 
-    setPages(paginateBlocks(blocks, heights, maxHeight))
+    setPages(paginateMainBlocks(blocks, heights, maxHeight))
     setSidebarPages(paginateSidebarBlocks(sidebarBlocks, heights, sidebarMaxHeight))
   }, [blocks, sidebarBlocks, cvData, competencyRows])
 
@@ -734,6 +273,237 @@ export function Preview() {
     </div>
   )
 }
+
+// ---------------------------------------------------------------------------
+// Single-column preview (Compact template)
+// ---------------------------------------------------------------------------
+
+function SingleColumnPreview() {
+  const { cvData } = useCVData()
+  const template = getTemplate(cvData.selectedTemplateId)
+  const PAGE_HEIGHT_MM = template.layout.pageHeightMm
+  const PAGE_MARGIN_MM = template.tokens.spacing.pageMargin
+  const cvLanguage = cvData.localization.cvLanguage
+  const sectionTitleOverrides = cvData.localization.sectionTitleOverrides[cvLanguage] ?? {}
+  const preferenceLabels = useMemo(
+    () => ({
+      workMode: getPreferenceLabelText(cvLanguage, 'workMode'),
+      availability: getPreferenceLabelText(cvLanguage, 'availability'),
+      location: getPreferenceLabelText(cvLanguage, 'location'),
+    }),
+    [cvLanguage],
+  )
+  // For single-column mode, chips are rendered as inline text — no chip row measurement needed
+  const emptyRows: Record<ProficiencyLevel, string[][]> = {
+    expert: [],
+    advanced: [],
+    proficient: [],
+  }
+  const contentBlocks = useMemo(
+    () => buildContentBlocks(cvData, template.layout.contentSections, emptyRows, preferenceLabels),
+    [cvData, template.layout.contentSections, preferenceLabels],
+  )
+  const [contentPages, setContentPages] = useState<ContentBlock[][]>([])
+  const measureRef = useRef<HTMLDivElement>(null)
+  const pxPerMmRef = useRef<number | null>(null)
+
+  const resolvePreviewSectionTitle = (section: EditorSectionId) =>
+    getPreviewSectionTitle(cvLanguage, section, sectionTitleOverrides)
+  const resolveCompetencyLevelTitle = (level: ProficiencyLevel) =>
+    getCompetencyLevelText(cvLanguage, level)
+  const emptyPreviewText = getPreviewEmptyStateText(cvLanguage)
+
+  // Contact items for header zone
+  const contactItems = useMemo(() => getVisibleContactItems(cvData), [cvData])
+
+  useLayoutEffect(() => {
+    if (!measureRef.current) return
+    if (!pxPerMmRef.current) {
+      pxPerMmRef.current = getPxPerMm()
+    }
+    const maxHeight =
+      (PAGE_HEIGHT_MM - PAGE_MARGIN_MM * 2) * (pxPerMmRef.current || 1)
+    const heights = new Map<string, number>()
+    const blockEls = measureRef.current.querySelectorAll<HTMLElement>('[data-block-id]')
+    blockEls.forEach((el) => {
+      const id = el.dataset.blockId
+      if (id) {
+        heights.set(id, getBlockHeight(el))
+      }
+    })
+    setContentPages(paginateContentBlocks(contentBlocks, heights, maxHeight))
+  }, [contentBlocks, cvData])
+
+  const pages = contentPages.length > 0 ? contentPages : [contentBlocks]
+
+  const handlePreviewClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = (event.target as HTMLElement).closest<HTMLElement>(
+      '[data-editor-section-target]',
+    )
+    if (!target) return
+    const section = target.dataset.editorSectionTarget as EditorSectionId | undefined
+    if (!section) return
+    focusEditorSection(section)
+  }
+
+  const showName = cvData.personalInfoVisibility.name && cvData.personalInfo.name
+  const showTitle =
+    cvData.personalInfoVisibility.professionalTitle && cvData.personalInfo.professionalTitle
+  const showPhoto = cvData.personalInfo.photo && cvData.personalInfoVisibility.photo
+
+  return (
+    <div className="preview-pages" onClick={handlePreviewClick}>
+      {pages.map((pageBlocks, pageIndex) => (
+        <div key={pageIndex} className="preview-page relative">
+          <div className="preview-page-inner">
+            {/* Header zone on first page only */}
+            {pageIndex === 0 && (
+              <div
+                className="mb-3 border-b pb-3"
+                style={{
+                  borderColor: template.tokens.colors.border.section,
+                  backgroundColor: template.tokens.colors.background.headerZone,
+                }}
+                data-editor-section-target="personalInfo"
+              >
+                <div className="flex items-start gap-3">
+                  {showPhoto && (
+                    <img
+                      src={cvData.personalInfo.photo}
+                      alt={cvData.personalInfo.name || ''}
+                      className="shrink-0 object-cover"
+                      style={{
+                        width: `${template.tokens.photo.sizeMm}mm`,
+                        height: `${template.tokens.photo.sizeMm}mm`,
+                        borderRadius:
+                          template.tokens.photo.shape === 'circle' ? '50%'
+                          : template.tokens.photo.shape === 'rounded' ? '4px'
+                          : '0',
+                      }}
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    {showName && (
+                      <h1
+                        className="leading-tight"
+                        style={{
+                          fontSize: `${template.tokens.fontSize.name}px`,
+                          fontWeight: template.tokens.fontWeight.name === 'bold' ? 700 : 600,
+                          color: template.tokens.colors.text.primary,
+                        }}
+                      >
+                        {cvData.personalInfo.name}
+                      </h1>
+                    )}
+                    {showTitle && (
+                      <p
+                        className="mt-0.5"
+                        style={{
+                          fontSize: `${template.tokens.fontSize.professionalTitle}px`,
+                          textTransform: template.tokens.textTransform.professionalTitle,
+                          letterSpacing: `${template.tokens.letterSpacing.professionalTitle}em`,
+                          color: template.tokens.colors.text.muted,
+                        }}
+                      >
+                        {cvData.personalInfo.professionalTitle}
+                      </p>
+                    )}
+                    {contactItems.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                        {contactItems.map((item, i) => (
+                          <span
+                            key={i}
+                            style={{
+                              fontSize: `${template.tokens.fontSize.contactInline}px`,
+                              color: template.tokens.colors.text.secondary,
+                            }}
+                          >
+                            {item.value}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Content blocks */}
+            <div className="space-y-3">
+              {pageBlocks.map((block) =>
+                renderContentBlock(
+                  block,
+                  resolvePreviewSectionTitle,
+                  resolveCompetencyLevelTitle,
+                  emptyPreviewText,
+                  template,
+                ),
+              )}
+            </div>
+          </div>
+          <div className="absolute bottom-3 right-4 text-[10px] text-gray-400">
+            {pageIndex + 1}
+          </div>
+        </div>
+      ))}
+
+      {/* Hidden measurement container */}
+      <div
+        ref={measureRef}
+        className="fixed left-0 top-0 pointer-events-none"
+        style={{ visibility: 'hidden', left: '-9999px' }}
+        aria-hidden="true"
+      >
+        <div className="preview-page">
+          <div className="preview-page-inner">
+            <div className="space-y-3">
+              {contentBlocks.map((block) =>
+                renderContentBlock(
+                  block,
+                  resolvePreviewSectionTitle,
+                  resolveCompetencyLevelTitle,
+                  emptyPreviewText,
+                  template,
+                ),
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Content block renderer (single-column mode — renders both Main & Sidebar blocks)
+// ---------------------------------------------------------------------------
+
+function renderContentBlock(
+  block: ContentBlock,
+  resolveSectionTitle: (section: EditorSectionId) => string,
+  resolveCompetencyLevelTitle: (level: ProficiencyLevel) => string,
+  emptyStateText: string,
+  _template: import('../cv-template/types').CVTemplate,
+) {
+  // MainBlock types
+  if (block.type === 'header' || block.type === 'statement' ||
+      block.type === 'experience-title' || block.type === 'experience-item' ||
+      block.type === 'education-title' || block.type === 'education-item' ||
+      block.type === 'empty') {
+    return renderBlock(block as MainBlock, resolveSectionTitle, emptyStateText)
+  }
+
+  // Section divider
+  if (block.type === 'section-divider') {
+    return <div key={block.id} data-block-id={block.id} className="my-1" />
+  }
+
+  // SidebarBlock types (rendered full-width in single-column mode)
+  return renderSidebarBlock(block as SidebarBlock, resolveSectionTitle, resolveCompetencyLevelTitle)
+}
+
+// ---------------------------------------------------------------------------
+// Two-column sub-components
+// ---------------------------------------------------------------------------
 
 function Sidebar({
   blocks,

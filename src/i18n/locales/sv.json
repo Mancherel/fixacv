@@ -82,6 +82,9 @@
       "tagline": "Gratis CV-byggare. Din data stannar hos dig.",
       "printPdfMobile": "Skriv ut PDF",
       "printPdfDesktop": "Skriv ut / Spara PDF",
+      "exportPdfMobile": "Exportera PDF",
+      "exportPdfDesktop": "Exportera PDF",
+      "exportingPdf": "Exporterar…",
       "closeDialog": "Stäng",
       "darkMode": "Mörkt läge",
       "lightMode": "Ljust läge"
