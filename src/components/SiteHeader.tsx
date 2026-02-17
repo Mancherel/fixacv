@@ -46,31 +46,18 @@ export function SiteHeader() {
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white/90 backdrop-blur print-hidden header-reveal dark:border-gray-700 dark:bg-gray-900">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6">
           <div className="flex items-center gap-2 sm:gap-2.5">
-            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-sm sm:h-10 sm:w-10">
-              <span className="logo-glow" aria-hidden="true" />
-              <svg
-                className="h-[18px] w-[18px] sm:h-5 sm:w-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.4}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M7 3h7l5 5v13H7z" />
-                <path d="M14 3v6h6" />
-                <path d="M5 20l6-6" />
-                <path d="M4 16l4 4" />
-                <path d="M10 10h4" />
-                <path d="M10 13h6" />
-              </svg>
-            </div>
-            <div className="min-w-0 leading-none">
-              <p className="text-2xl text-gray-900 sm:text-[2rem] dark:text-gray-100">
-                <span className="font-semibold">fixacv</span>
-                <span className="text-amber-400">.app</span>
+            <img
+              src="/fixacv.app.logo.png"
+              alt=""
+              className="h-[36px] sm:h-[44px] w-auto"
+            />
+            <div className="min-w-0">
+              <p className="flex items-baseline text-2xl font-bold tracking-tight leading-[1] sm:text-[2rem]">
+                <span className="text-gray-600 dark:text-gray-300">fixa</span>
+                <span className="text-blue-600 dark:text-blue-400">cv</span>
+                <span className="text-[0.55em] text-blue-600/70 dark:text-blue-400/70">.app</span>
               </p>
-              <p className="hidden pt-0 text-xs text-slate-400 info-reveal sm:block dark:text-slate-500">
+              <p className="hidden pt-0 text-xs text-slate-400 font-normal info-reveal sm:block dark:text-slate-400">
                 {t('header.tagline')}
               </p>
             </div>
@@ -81,7 +68,7 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={handlePrint}
-              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-md bg-blue-600 px-2.5 text-xs font-semibold leading-none whitespace-nowrap text-white shadow-md shadow-blue-200/60 hover:bg-blue-700 btn-lift sm:px-3.5 sm:text-sm dark:shadow-blue-900/40"
+              className="flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-md bg-blue-600 px-2.5 text-xs font-semibold leading-none whitespace-nowrap text-white shadow-md shadow-blue-200/60 hover:bg-blue-700 btn-lift sm:px-3.5 sm:text-xs dark:shadow-blue-900/40"
             >
               <svg className="h-3 w-3 sm:h-3.5 sm:w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path
