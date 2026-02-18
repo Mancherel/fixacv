@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { CVProvider, useCVData } from '../context/CVContext'
 import type { ReactNode } from 'react'
@@ -9,6 +9,11 @@ const wrapper = ({ children }: { children: ReactNode }) => <CVProvider>{children
 describe('CVContext', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   describe('initial state', () => {
@@ -19,9 +24,25 @@ describe('CVContext', () => {
       expect(result.current.cvData.education).toEqual([])
     })
 
-    it('lastSaved is set on initial mount', () => {
+    it('lastSaved is set after debounce', async () => {
       const { result } = renderHook(() => useCVData(), { wrapper })
+      expect(result.current.lastSaved).toBeNull()
+      
+      await act(async () => {
+        vi.advanceTimersByTime(600)
+      })
+      
       expect(result.current.lastSaved).not.toBeNull()
+    })
+
+    it('storageWarnings starts empty', () => {
+      const { result } = renderHook(() => useCVData(), { wrapper })
+      expect(result.current.storageWarnings).toEqual([])
+    })
+
+    it('storageStats has initial values', () => {
+      const { result } = renderHook(() => useCVData(), { wrapper })
+      expect(result.current.storageStats.usedBytes).toBe(0)
     })
   })
 
@@ -459,6 +480,18 @@ describe('CVContext', () => {
 
       expect(result.current.cvData.personalInfo.name).toBe('')
       expect(result.current.cvData.experiences).toHaveLength(0)
+    })
+  })
+
+  describe('storage warnings', () => {
+    it('clearStorageWarnings clears warnings', () => {
+      const { result } = renderHook(() => useCVData(), { wrapper })
+
+      act(() => {
+        result.current.clearStorageWarnings()
+      })
+
+      expect(result.current.storageWarnings).toEqual([])
     })
   })
 })

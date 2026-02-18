@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react'
 import type {
   AppLanguage,
   CVData,
@@ -8,13 +8,15 @@ import type {
   Competency,
   ListItem,
 } from '../types'
-import { storage } from '../utils/storage'
+import { storage, type StorageWarning, type StorageStats } from '../utils/storage'
 import { getDefaultCVData } from '../utils/defaults'
 import { normalizeCVData, normalizeListItems } from './normalizeCVData'
 
 interface CVContextType {
   cvData: CVData
   lastSaved: Date | null
+  storageWarnings: StorageWarning[]
+  storageStats: StorageStats
   updatePersonalInfo: (info: Partial<CVData['personalInfo']>) => void
   togglePersonalInfoVisibility: (field: keyof CVData['personalInfoVisibility']) => void
   updateProfessionalStatement: (statement: string) => void
@@ -40,7 +42,10 @@ interface CVContextType {
   clearAllData: () => void
   importData: (data: CVData) => void
   exportData: () => CVData
+  clearStorageWarnings: () => void
 }
+
+const AUTO_SAVE_DELAY = 500
 
 const CVContext = createContext<CVContextType | undefined>(undefined)
 
@@ -50,12 +55,46 @@ export function CVProvider({ children }: { children: ReactNode }) {
     return normalizeCVData(saved)
   })
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [storageWarnings, setStorageWarnings] = useState<StorageWarning[]>([])
+  const [storageStats, setStorageStats] = useState<StorageStats>(() => storage.getStats())
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Auto-save to localStorage whenever cvData changes
   useEffect(() => {
-    storage.save(cvData)
-    setLastSaved(new Date())
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      const warnings = storage.save(cvData)
+      if (warnings.length > 0) {
+        setStorageWarnings(warnings)
+      }
+      setLastSaved(new Date())
+      setStorageStats(storage.getStats())
+    }, AUTO_SAVE_DELAY)
+    
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
   }, [cvData])
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+        storage.save(cvData)
+      }
+    }
+    
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [cvData])
+
+  const clearStorageWarnings = () => {
+    setStorageWarnings([])
+  }
 
   const updatePersonalInfo = (info: Partial<CVData['personalInfo']>) => {
     setCVData((prev) => ({
@@ -308,6 +347,8 @@ export function CVProvider({ children }: { children: ReactNode }) {
       value={{
         cvData,
         lastSaved,
+        storageWarnings,
+        storageStats,
         updatePersonalInfo,
         togglePersonalInfoVisibility,
         updateProfessionalStatement,
@@ -333,6 +374,7 @@ export function CVProvider({ children }: { children: ReactNode }) {
         clearAllData,
         importData,
         exportData,
+        clearStorageWarnings,
       }}
     >
       {children}
